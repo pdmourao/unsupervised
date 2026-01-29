@@ -4,7 +4,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 import theory
 from tqdm import tqdm
-import scipy
 
 kwargs = {'neurons': 1000,
           'alpha': 0.05,
@@ -36,7 +35,6 @@ kwargs.pop('initial')
 kwargs.pop('neurons')
 kwargs['attractor'] = 'ex'
 mag_values_ex = [theory.mags(**kwargs, m = m) for m in tqdm(ms)]
-
 
 p_std=plt.errorbar(m_values, mag_list_ex_mean, mag_list_ex_std, linestyle='None', marker='^', color = 'blue')
 p1 = plt.plot(ms, mag_values_ex, color = 'blue')
