@@ -1,15 +1,9 @@
 import numpy as np
 from time import time as time
-from tqdm import tqdm
 from laboratory.systems import Dream as dream
-from laboratory.storage import sanity_check
-from matplotlib import pyplot as plt
 
-inputs = {'neurons': 1000,
-          'alpha': 0.05
-          }
 
-def delta(entropy, neurons, alpha, r, m, initial, attractor, p = 1, diagonal = False, checker = None):
+def delta(entropy, neurons, alpha, r, m, initial, attractor, p = 1, diagonal = False):
 
     t = time()
 
@@ -25,16 +19,12 @@ def delta(entropy, neurons, alpha, r, m, initial, attractor, p = 1, diagonal = F
     deltas = o_state * (i_state @ system.J)
     print(f'Deltas computed in {time() - t} seconds.')
 
-    sanity_check(deltas, checker=checker)
 
     return deltas
 
 # remove auto creation (for when mistake is made in giving inputs)
 # create single_checker and remove sanity_checker from these experiments
-# finish mags_onestep, returning both attractors
-# take it to graphs and data treatment
-# create function to read off every datapoint that matches a given set of inputs
-def mags_onestep(entropy, neurons, alpha, r, m, initial, attractor, p, diagonal = False, checker = None):
+def mags_onestep(entropy, neurons, alpha, r, m, initial, p, diagonal = False, disable = False):
 
     t = time()
 
@@ -42,14 +32,19 @@ def mags_onestep(entropy, neurons, alpha, r, m, initial, attractor, p, diagonal 
                    diagonal = diagonal)
     system.set_interaction()
 
-    print(f'Interaction matrix computed in {time() - t} seconds.')
+    if not disable:
+        print(f'Interaction matrix computed in {time() - t} seconds.')
 
     t = time()
     i_state = system.gen_samples(system.state(initial), p = p)
-    o_state = system.state(attractor)
-    deltas = o_state * (i_state @ system.J)
-    print(f'Deltas computed in {time() - t} seconds.')
+    o_state_arc = system.state('arc')
+    o_state_ex = system.state('ex')
+    mags_arc = np.mean(np.sign(o_state_arc * (i_state @ system.J)), axis = -1)
+    mags_ex = np.mean(np.sign(o_state_ex * (i_state @ system.J)), axis=-1)
 
-    sanity_check(deltas, checker=checker)
+    if not disable:
+        print(f'Magnetizations computed in {time() - t} seconds.')
 
-    return deltas
+    return mags_arc, mags_ex
+
+
