@@ -98,7 +98,7 @@ def peak_args(alpha, r, m, p=1, attractor = 'arc', diagonal = False):
 
     if alpha > 0:
         mu2 = J_moments(2, measure = spec_dist(alpha, r, m), peak_coordinates = peak(alpha, r, m))
-        print(mu2-alpha**2)
+        # print(mu2-alpha**2)
     else:
         mu2 = 0
 
@@ -108,7 +108,7 @@ def peak_args(alpha, r, m, p=1, attractor = 'arc', diagonal = False):
         av2 = p * r ** 2 - shift
         return [(1+p)/2, (1-p)/2], [av1,av2], [std,std]
     elif attractor == 'ex':
-        print(r ** 4 * p ** 2 * (m - 1) / m ** 2)
+        # print(r ** 4 * p ** 2 * (m - 1) / m ** 2)
         std = np.sqrt(mu2 - alpha ** 2 + r ** 4 * p ** 2 * (m - 1) / m ** 2)
         av1 = 1 / m + shift + r ** 3 * p
         av2 = - 1 / m - shift + r ** 3 * p

@@ -36,11 +36,13 @@ def delta_test(samples, neurons, alpha, r, m, initial, attractor, p = 1, diagona
         system.set_interaction()
         examples = system.examples
         J = 1 / (neurons * m) * np.einsum('aui, auj -> ij', examples[1:], examples[1:], optimize = True)
+        Jt = 1 / (neurons * m) * np.einsum('ui, uj -> ij', examples[0], examples[0], optimize=True)
         phi = np.random.default_rng(rng_ss_list[1]).choice([-1, 1], p=[(1 - p) / 2, (1 + p) / 2], size = (m, 1, neurons))
         input = examples[0,0]*phi[0,0]
         output = examples[0,0]
         # deltas[sample] = ( 1 / m) * phi + output * ( J @ input )
         deltas[sample] = examples[0,0] * (system.J @ ((examples * phi)[0,0]))
+        deltas[sample] = examples[0, 0] * (J @ input)
 
         # print(f'Delta {sample+1}/{samples} computed in {time() - t} seconds.')
 
