@@ -1,13 +1,17 @@
 import numpy as np
 from time import time as time
 from laboratory.systems import Dream as dream
+from tqdm import tqdm
 
 
-def delta(entropy, neurons, alpha, r, m, initial, attractor, p = 1, diagonal = False):
+def delta(neurons, alpha, r, m, initial, attractor, p = 1, diagonal = False, entropy = None):
 
     t = time()
-
-    system = dream(neurons = neurons, k = int(alpha * neurons), r = r, m = m, rng_ss = np.random.SeedSequence(entropy),
+    if alpha > 0:
+        k = int(alpha * neurons)
+    else:
+        k = 1
+    system = dream(neurons = neurons, k = k, r = r, m = m, rng_ss = np.random.SeedSequence(entropy),
                    diagonal = diagonal)
     system.set_interaction()
 
@@ -19,8 +23,29 @@ def delta(entropy, neurons, alpha, r, m, initial, attractor, p = 1, diagonal = F
     deltas = o_state * (i_state @ system.J)
     print(f'Deltas computed in {time() - t} seconds.')
 
+    return deltas
+
+
+def delta_test(samples, neurons, alpha, r, m, initial, attractor, p = 1, diagonal = False, entropy = None):
+    deltas = np.zeros((samples, m, 1, neurons))
+    for sample in tqdm(range(samples)):
+        t = time()
+        rng_ss_list = np.random.SeedSequence(entropy).spawn(2)
+        system = dream(neurons = neurons, k = 1, r = r, m = m, rng_ss = rng_ss_list[0],
+                   diagonal = diagonal)
+        system.set_interaction()
+        examples = system.examples
+        J = 1 / (neurons * m) * np.einsum('aui, auj -> ij', examples[1:], examples[1:], optimize = True)
+        phi = np.random.default_rng(rng_ss_list[1]).choice([-1, 1], p=[(1 - p) / 2, (1 + p) / 2], size = (m, 1, neurons))
+        input = examples[0,0]*phi[0,0]
+        output = examples[0,0]
+        # deltas[sample] = ( 1 / m) * phi + output * ( J @ input )
+        deltas[sample] = examples[0,0] * (system.J @ ((examples * phi)[0,0]))
+
+        # print(f'Delta {sample+1}/{samples} computed in {time() - t} seconds.')
 
     return deltas
+
 
 # remove auto creation (for when mistake is made in giving inputs)
 # create single_checker and remove sanity_checker from these experiments

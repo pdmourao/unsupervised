@@ -77,11 +77,14 @@ def J_moments(n, measure, peak_coordinates):
 # this function is called double_peak but it can be used for any number of gaussian peaks
 # probs are the probabilities of each peak, avs their averages and stds their standard deviations
 def double_peak(x, probs, avs, stds):
+    assert len(probs) == len(avs) and len(probs) == len(stds), 'Input arrays for double_peak do not have the same lengths'
     peaks=np.array([p*scipy.stats.norm.pdf(x, av, std) for p, av, std in zip(probs, avs, stds)])
     return np.sum(peaks)
 
 # magnetizations given their peak distributions as a sum of error functions
 def double_peak_mags(probs, avs, stds):
+    assert len(probs) == len(avs) and len(probs) == len(
+        stds), 'Input arrays for double_peak_mags do not have the same lengths'
     peaks=np.array([p*scipy.special.erf(av/(np.sqrt(2)*std)) for p, av, std in zip(probs, avs, stds)])
     return np.sum(peaks)
 
@@ -93,22 +96,27 @@ def peak_args(alpha, r, m, p=1, attractor = 'arc', diagonal = False):
     else:
         shift=0
 
-    mu2 = J_moments(2, measure = spec_dist(alpha, r, m), peak_coordinates = peak(alpha, r, m))
-    std = np.sqrt(mu2-alpha**2+r**4*(m-1)/m**2)
+    if alpha > 0:
+        mu2 = J_moments(2, measure = spec_dist(alpha, r, m), peak_coordinates = peak(alpha, r, m))
+        print(mu2-alpha**2)
+    else:
+        mu2 = 0
 
     if attractor == 'arc':
-        av1 = p*  r ** 2 + shift
+        std = np.sqrt(mu2 - alpha ** 2 + r ** 2 * p ** 2 * (m - 1) / m ** 2)
+        av1 = p *  r ** 2 + shift
         av2 = p * r ** 2 - shift
         return [(1+p)/2, (1-p)/2], [av1,av2], [std,std]
     elif attractor == 'ex':
-        assert p == 1, 'Only stability has been defined for examples (i.e. p=1)'
-        av1 = 1/m+shift+r**3
-        av2 = 1/m+shift-r**3
-        return [(1+r)/2, (1-r)/2], [av1,av2], [std,std]
+        print(r ** 4 * p ** 2 * (m - 1) / m ** 2)
+        std = np.sqrt(mu2 - alpha ** 2 + r ** 4 * p ** 2 * (m - 1) / m ** 2)
+        av1 = 1 / m + shift + r ** 3 * p
+        av2 = - 1 / m - shift + r ** 3 * p
+        av3 = 1 / m + shift - r ** 3 * p
+        av4 = - 1 / m - shift - r ** 3 * p
+        return [(1+r)*(1+p)/4, (1+r)*(1-p)/4, (1-r)*(1+p)/4, (1-r)*(1-p)/4], [av1,av2,av3,av4], [std,std,std,std]
     else:
         raise TypeError("Attractor invalid")
-
-    return dist
 
 def delta_dist(*args, **kwargs):
     return lambda x: double_peak(x, *peak_args(*args, **kwargs))
