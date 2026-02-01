@@ -6,10 +6,10 @@ from tqdm import tqdm
 
 import theory
 
-state = 'ex'
+state = 'arc'
 
 kwargs = {'neurons': 2000,
-          'alpha': 0,
+          'alpha': 0.05,
           'r': 0.5,
           'm': 20,
           'initial': state,

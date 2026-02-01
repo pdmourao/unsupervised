@@ -27,26 +27,25 @@ def delta(neurons, alpha, r, m, initial, attractor, p = 1, diagonal = False, ent
 
 
 def delta_test(samples, neurons, alpha, r, m, initial, attractor, p = 1, diagonal = False, entropy = None):
-    deltas = np.zeros((samples, m, 1, neurons))
+    deltas = []
     for sample in tqdm(range(samples)):
         t = time()
         rng_ss_list = np.random.SeedSequence(entropy).spawn(2)
-        system = dream(neurons = neurons, k = 1, r = r, m = m, rng_ss = rng_ss_list[0],
-                   diagonal = diagonal)
-        system.set_interaction()
-        examples = system.examples
-        J = 1 / (neurons * m) * np.einsum('aui, auj -> ij', examples[1:], examples[1:], optimize = True)
-        Jt = 1 / (neurons * m) * np.einsum('ui, uj -> ij', examples[0], examples[0], optimize=True)
-        phi = np.random.default_rng(rng_ss_list[1]).choice([-1, 1], p=[(1 - p) / 2, (1 + p) / 2], size = (m, 1, neurons))
-        input = examples[0,0]*phi[0,0]
+        examples = np.random.default_rng(rng_ss_list[0]).choice([-1, 1], p=[(1 - r) / 2, (1 + r) / 2], size = (m, neurons))
+        J = 1 / (neurons * m) * np.einsum('ai, aj -> ij', examples[1:], examples[1:], optimize = True)
+        np.fill_diagonal(J,0)
+        Jt = 1 / (neurons * m) * np.einsum('i, j -> ij', examples[0], examples[0], optimize=True)
+        np.fill_diagonal(Jt,0)
+        phi = np.random.default_rng(rng_ss_list[1]).choice([-1, 1], p=[(1 - p) / 2, (1 + p) / 2], size = (m, neurons))
+        input = examples[0]*phi[0]
         output = examples[0,0]
         # deltas[sample] = ( 1 / m) * phi + output * ( J @ input )
-        deltas[sample] = examples[0,0] * (system.J @ ((examples * phi)[0,0]))
-        deltas[sample] = examples[0, 0] * (J @ input)
+        deltas.append(examples[0] * (J @ ((examples * phi)[0]))+examples[0] * (Jt @ ((examples * phi)[0])))
+        # deltas.append(np.mean(input, axis = -1))
 
         # print(f'Delta {sample+1}/{samples} computed in {time() - t} seconds.')
 
-    return deltas
+    return np.array(deltas)
 
 
 # remove auto creation (for when mistake is made in giving inputs)

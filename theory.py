@@ -103,17 +103,17 @@ def peak_args(alpha, r, m, p=1, attractor = 'arc', diagonal = False):
         mu2 = 0
 
     if attractor == 'arc':
-        std = np.sqrt(mu2 - alpha ** 2 + r ** 2 * p ** 2 * (m - 1) / m ** 2)
+        std = np.sqrt(mu2 - alpha ** 2 + r ** 2 * p ** 2 * (1 + r) * (1 - r) * (m - 1) / m ** 2)
         av1 = p *  r ** 2 + shift
         av2 = p * r ** 2 - shift
         return [(1+p)/2, (1-p)/2], [av1,av2], [std,std]
     elif attractor == 'ex':
         # print(r ** 4 * p ** 2 * (m - 1) / m ** 2)
-        std = np.sqrt(mu2 - alpha ** 2 + r ** 4 * p ** 2 * (m - 1) / m ** 2)
-        av1 = 1 / m + shift + r ** 3 * p
-        av2 = - 1 / m - shift + r ** 3 * p
-        av3 = 1 / m + shift - r ** 3 * p
-        av4 = - 1 / m - shift - r ** 3 * p
+        std = np.sqrt(mu2 - alpha ** 2 + r ** 4 * p ** 2 * (1 + r) * (1 - r) * (m - 1) / m ** 2)
+        av1 = p / m + shift + r ** 3 * p
+        av2 = p / m - shift + r ** 3 * p
+        av3 = p / m + shift - r ** 3 * p
+        av4 = p / m - shift - r ** 3 * p
         return [(1+r)*(1+p)/4, (1+r)*(1-p)/4, (1-r)*(1+p)/4, (1-r)*(1-p)/4], [av1,av2,av3,av4], [std,std,std,std]
     else:
         raise TypeError("Attractor invalid")

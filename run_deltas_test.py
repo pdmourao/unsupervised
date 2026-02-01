@@ -10,7 +10,7 @@ from theory import double_peak
 
 state = 'ex'
 
-n = 2000
+n = 3000
 r = 0.5
 p = 0.5
 m = 20
@@ -23,26 +23,21 @@ kwargs = {'alpha': 0,
           'diagonal': False
           }
 
-probs = [(1 + r) * (1 + p) / 4,
-         (1 + r) * (1 - p) / 4,
-         (1 - r) * (1 + p) / 4,
-         (1 - r) * (1 - p) / 4]
+probs = [(1 + r) / 2, (1 - r) / 2]
 avs = [p/m + r ** 3 * p,
-       p/m + r ** 3 * p,
-       p/m - r ** 3 * p,
        p/m - r ** 3 * p]
-stds = [np.sqrt(r ** 4 * p ** 2 * (m - 1) / m ** 2),
-        np.sqrt(r ** 4 * p ** 2 * (m - 1) / m ** 2),
-        np.sqrt(r ** 4 * p ** 2 * (m - 1) / m ** 2),
-        np.sqrt(r ** 4 * p ** 2 * (m - 1) / m ** 2)]
+
+std = np.sqrt(r ** 4 * p ** 2 * (m - 1) * (1 + r) * (1-r) / (m ** 2))
+
+stds = np.full(shape = 2, fill_value = std)
 
 def gausss(x):
     return double_peak(x, probs, avs, stds)
 
-deltas_nd = exp.delta_test(samples = 10, initial = state, neurons = n, **kwargs)
+deltas_nd = exp.delta_test(samples = 20, initial = state, neurons = n, **kwargs)
 print(np.shape(deltas_nd))
-print(np.shape(deltas_nd))
-plt.hist(np.ravel(deltas_nd), bins = 'fd', density=True)
+print(deltas_nd)
+plt.hist(np.ravel(deltas_nd), bins = 30, density=True)
 
 xmin, xmax = plt.xlim()
 
