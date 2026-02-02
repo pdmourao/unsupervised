@@ -3,12 +3,18 @@ import math
 import scipy
 
 # gives the spectral distribution, predicted with Edwards-Jones
-def spec_dist(alpha, r, m):
+def spec_dist(alpha, r, m, diagonal = True):
+
+    if diagonal:
+        shift = 0
+    else:
+        shift = alpha
 
     if np.isinf(m):
         lp = r ** 2 * (1 + np.sqrt(alpha)) ** 2 + alpha * (1 - r ** 2)
         lm = r ** 2 * (1 - np.sqrt(alpha)) ** 2 + alpha * (1 - r ** 2)
         def dist(x):
+            x += shift
             if lm < x < lp:
                 return np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * r ** 2 * (x - alpha * (1 - r ** 2)))
             else:
@@ -18,6 +24,7 @@ def spec_dist(alpha, r, m):
         lp = (1 + np.sqrt(alpha)) ** 2
         lm = (1 - np.sqrt(alpha)) ** 2
         def dist(x):
+            x += shift
             if lm < x < lp:
                 return np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * x)
             else:
@@ -29,6 +36,7 @@ def spec_dist(alpha, r, m):
         mu2 = 1 / (r ** 2 + (1 - r ** 2) / m)
 
         def dist(x):
+            x += shift
             a = x
             b = (m * alpha - 1) - x * (mu1 + mu2)
             c = (1 - alpha) * mu1 + (1 - alpha * (m - 1)) * mu2 + x * mu1 * mu2
@@ -47,16 +55,19 @@ def spec_dist(alpha, r, m):
     return dist
 
 # gives the delta peak
-def peak(alpha, m, r):
-
+def peak(alpha, m, r, diagonal = True):
+    if diagonal:
+        shift=0
+    else:
+        shift = -alpha
     if np.isinf(m):
-        pos = alpha * (1 - r ** 2)
+        pos = alpha * (1 - r ** 2) -shift
         height = max(1 - alpha,0)
     elif r == 1:
-        pos = 0
+        pos = -shift
         height = max(1 - alpha,0)
     else:
-        pos = 0
+        pos = -shift
         height = max(1 - alpha * m, 0)
     return pos, height
 

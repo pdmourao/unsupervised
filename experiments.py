@@ -48,7 +48,6 @@ def delta_test(samples, neurons, alpha, r, m, initial, attractor, p = 1, diagona
     return np.array(deltas)
 
 
-# remove auto creation (for when mistake is made in giving inputs)
 # create single_checker and remove sanity_checker from these experiments
 def mags_onestep(entropy, neurons, alpha, r, m, initial, p, diagonal = False, disable = False):
 
@@ -73,4 +72,47 @@ def mags_onestep(entropy, neurons, alpha, r, m, initial, p, diagonal = False, di
 
     return mags_arc, mags_ex
 
+
+def spectrum(samples, neurons, alpha, r, m, entropy = None, diagonal = False):
+
+    t = time()
+    spec = np.empty((samples, neurons))
+
+    rng_ss_list = np.random.SeedSequence(entropy).spawn(samples)
+
+    for sample in tqdm(range(samples)):
+        system = dream(neurons=neurons, k=int(alpha * neurons), r=r, m=m, rng_ss = rng_ss_list[sample],
+                       diagonal=diagonal)
+        system.set_interaction()
+
+        spec[sample] = np.real_if_close(np.linalg.eigvals(system.J), tol=1e-3)
+
+    print(f'Eigenvalues computed in {time() - t} seconds.')
+    return spec
+
+
+
+def attraction_mc(entropy, neurons, alpha, r, m, initial, diagonal = False, disable = False):
+
+    t = time()
+
+    system = dream(neurons = neurons, k = int(alpha * neurons), r = r, m = m, rng_ss = np.random.SeedSequence(entropy),
+                   diagonal = diagonal)
+    system.set_interaction()
+
+    if not disable:
+        print(f'Interaction matrix computed in {time() - t} seconds.')
+    t = time()
+    system.initial_state = system.gen_samples(system.state(initial), p=r)
+    final_state, errors = system.simulate_zero_T(max_it = 100)
+    if not disable:
+        print(f'System ran in {time() - t} seconds to {len(errors)} iteration(s).')
+    t = time()
+    o_state = system.state(initial)
+    mags = np.mean(o_state * final_state, axis = -1)
+
+    if not disable:
+        print(f'Magnetizations computed in {time() - t} seconds.')
+
+    return mags, errors
 
