@@ -49,7 +49,7 @@ def delta_test(samples, neurons, alpha, r, m, initial, attractor, p = 1, diagona
 
 
 # create single_checker and remove sanity_checker from these experiments
-def mags_onestep(entropy, neurons, alpha, r, m, initial, p, diagonal = False, disable = False):
+def mags_onestep(entropy, neurons, alpha, r, m, initial, attractor, p, diagonal = False, disable = False):
 
     t = time()
 
@@ -62,18 +62,16 @@ def mags_onestep(entropy, neurons, alpha, r, m, initial, p, diagonal = False, di
 
     t = time()
     i_state = system.gen_samples(system.state(initial), p = p)
-    o_state_arc = system.state('arc')
-    o_state_ex = system.state('ex')
-    mags_arc = np.mean(np.sign(o_state_arc * (i_state @ system.J)), axis = -1)
-    mags_ex = np.mean(np.sign(o_state_ex * (i_state @ system.J)), axis=-1)
+    o_state = system.state(attractor)
+    mags = np.mean(np.sign(o_state * (i_state @ system.J)), axis=-1)
 
     if not disable:
         print(f'Magnetizations computed in {time() - t} seconds.')
 
-    return mags_arc, mags_ex
+    return mags
 
 
-def spectrum(samples, neurons, alpha, r, m, entropy = None, diagonal = False):
+def spec_nosave(samples, neurons, alpha, r, m, entropy = None, diagonal = False):
 
     t = time()
     spec = np.empty((samples, neurons))
@@ -91,8 +89,17 @@ def spectrum(samples, neurons, alpha, r, m, entropy = None, diagonal = False):
     return spec
 
 
+def spectrum(entropy, neurons, alpha, r, m, diagonal = False):
 
-def attraction_mc(entropy, neurons, alpha, r, m, initial, diagonal = False, disable = False):
+    t = time()
+    system = dream(neurons=neurons, k=int(alpha * neurons), r=r, m=m, rng_ss = np.random.SeedSequence(entropy),
+                       diagonal=diagonal)
+    system.set_interaction()
+
+    return np.real_if_close(np.linalg.eigvals(system.J), tol=1e-3)
+
+
+def attraction_mc(entropy, neurons, alpha, r, m, initial, max_it, diagonal = False, disable = False):
 
     t = time()
 
@@ -101,18 +108,21 @@ def attraction_mc(entropy, neurons, alpha, r, m, initial, diagonal = False, disa
     system.set_interaction()
 
     if not disable:
-        print(f'Interaction matrix computed in {time() - t} seconds.')
+        print(f'Interaction matrix computed in {round(time() - t,3)} seconds.')
     t = time()
     system.initial_state = system.gen_samples(system.state(initial), p=r)
-    final_state, errors = system.simulate_zero_T(max_it = 100)
+    final_state, errors = system.simulate_zero_T(max_it = max_it)
     if not disable:
-        print(f'System ran in {time() - t} seconds to {len(errors)} iteration(s).')
+        print(f'System ran in {round(time() - t,3)} seconds to {len(errors)} iteration(s).')
+        print(f'Final max error was {errors[-1]}')
     t = time()
-    o_state = system.state(initial)
-    mags = np.mean(o_state * final_state, axis = -1)
+    o_state_arc = system.state('arc')
+    o_state_ex = system.state('ex')
+    mags_arc = np.mean(o_state_arc * final_state, axis = -1)
+    mags_ex = np.mean(o_state_ex * final_state, axis=-1)
 
     if not disable:
-        print(f'Magnetizations computed in {time() - t} seconds.')
+        print(f'Magnetizations computed in {round(time() - t,3)} seconds.')
 
-    return mags, errors
+    return mags_arc, mags_ex, errors[-1]
 
