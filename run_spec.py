@@ -5,8 +5,8 @@ import theory
 from tqdm import tqdm
 
 kwargs = {'alpha' : 0.02,
-          'm': 5,
-          'r': 0.4,
+          'm': 15,
+          'r': 0.7,
           'diagonal': False
           }
 

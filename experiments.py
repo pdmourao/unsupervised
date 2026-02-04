@@ -126,3 +126,31 @@ def attraction_mc(entropy, neurons, alpha, r, m, initial, max_it, diagonal = Fal
 
     return mags_arc, mags_ex, errors[-1]
 
+
+def attraction_mc_red(entropy, neurons, alpha, r, m, p, initial, max_it, diagonal = False, disable = False, reduced = False):
+
+    t = time()
+
+    system = dream(neurons = neurons, k = int(alpha * neurons), r = r, m = m, rng_ss = np.random.SeedSequence(entropy),
+                   diagonal = diagonal)
+    system.set_interaction()
+
+    if not disable:
+        print(f'Interaction matrix computed in {round(time() - t,3)} seconds.')
+    t = time()
+    system.initial_state = system.gen_samples(system.state(initial, reduced = reduced), p=p)
+    final_state, errors = system.simulate_zero_T(max_it = max_it)
+    if not disable:
+        print(f'System ran in {round(time() - t,3)} seconds to {len(errors)} iteration(s).')
+        print(f'Final max error was {errors[-1]}')
+    t = time()
+    o_state_arc = system.state('arc')
+    o_state_ex = system.state('ex', reduced = reduced)
+    mags_arc = np.mean(o_state_arc * final_state, axis = -1)
+    mags_ex = np.mean(o_state_ex * final_state, axis=-1)
+
+    if not disable:
+        print(f'Magnetizations computed in {round(time() - t,3)} seconds.')
+
+    return mags_arc, mags_ex, errors[-1]
+
