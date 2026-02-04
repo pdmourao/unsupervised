@@ -42,7 +42,12 @@ kwargs_7 = {'alpha' : 0.02,
           'r': 0.7,
           'diagonal': False
           }
-kwargs = kwargs_1
+kwargs_8 = {'alpha' : 0.1,
+          'm': 50,
+          'r': 0.2,
+          'diagonal': False
+          }
+kwargs = kwargs_3
 neurons = 1000
 samples = 10
 max_it_mc = 200
@@ -63,6 +68,9 @@ xs = np.linspace(xmin, xmax, num = 100)
 ys = [spec_func(x) for x in tqdm(xs)]
 plt.plot(xs, ys)
 plt.ylim(0,1)
+plt.xlabel(r'$\lambda$')
+plt.ylabel(r'$\rho(\lambda)$')
+plt.title('Spectrum')
 plt.show()
 
 p_values = np.linspace(1,0.1, num = 10)
@@ -86,6 +94,11 @@ plt.plot(ps, ps, color = 'grey', linestyle = 'dashed')
 
 plt.gca().invert_xaxis()
 plt.ylim(0,1)
+
+plt.xlabel(r'$p$')
+plt.ylabel(r'$m_1$')
+plt.title('One-step magnetizations')
+
 plt.show()
 
 experiment = lab.Experiment(directory = 'Data', func = exp.attraction_mc, neurons = neurons, initial = 'arc',
@@ -96,10 +109,20 @@ mags_arc_mc, mags_ex_mc, errors_mc = experiment.read()
 
 plt.hist(np.ravel(mags_arc_mc), bins = 'fd', density = True, color = 'blue')
 plt.xlim(0,1)
+
+plt.xlabel(r'$m_\infty$')
+plt.ylabel(r'$p(m_\infty)$')
+plt.title('Attractiveness of archetypes, starting from a new example')
+
 plt.show()
 
 plt.hist(np.ravel(mags_ex_mc), bins = 'fd', density = True, color = 'orange')
 plt.xlim(0,1)
+
+plt.xlabel(r'$m_\infty$')
+plt.ylabel(r'$p(m_\infty)$')
+plt.title('Attractiveness of examples, starting from a new example')
+
 plt.show()
 
 print(f'Max final error across all first samples was {np.max(errors_mc)}')
@@ -112,17 +135,27 @@ mags_arc_mc, mags_ex_mc, errors_mc = experiment.read()
 
 plt.hist(np.ravel(mags_arc_mc), bins = 'fd', density = True, color = 'blue')
 plt.xlim(0,1)
+
+plt.xlabel(r'$m_\infty$')
+plt.ylabel(r'$p(m_\infty)$')
+plt.title('Attractiveness of archetypes, starting from a stored archetype')
+
 plt.show()
 
 plt.hist(np.ravel(mags_ex_mc), bins = 'fd', density = True, color = 'orange')
 plt.xlim(0,1)
+
+plt.xlabel(r'$m_\infty$')
+plt.ylabel(r'$p(m_\infty)$')
+plt.title('Attractiveness of examples, starting from a stored archetype')
+
 plt.show()
 
 print(f'Max final error across all second samples was {np.max(errors_mc)}')
 
 run_last = True
 if run_last:
-    p = 0.9
+    p = 0.5
     experiment = lab.Experiment(directory = 'Data', func = exp.attraction_mc_red, neurons = neurons, initial = 'ex', p =p,
                                 max_it = max_it_mc, reduced = True, **kwargs)
     experiment.create()
@@ -131,10 +164,20 @@ if run_last:
 
     plt.hist(np.ravel(mags_arc_mc), bins = 'fd', density = True, color = 'blue')
     plt.xlim(0,1)
+
+    plt.xlabel(r'$m_\infty$')
+    plt.ylabel(r'$p(m_\infty)$')
+    plt.title('Attractiveness of archetypes, starting close to a stored example')
+
     plt.show()
 
     plt.hist(np.ravel(mags_ex_mc), bins = 'fd', density = True, color = 'orange')
     plt.xlim(0,1)
+
+    plt.xlabel(r'$m_\infty$')
+    plt.ylabel(r'$p(m_\infty)$')
+    plt.title('Attractiveness of examples, starting close to the same example')
+
     plt.show()
 
     print(f'Max final error across all second samples was {np.max(errors_mc)}')
