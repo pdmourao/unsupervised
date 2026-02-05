@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import theory
 from tqdm import tqdm
 
-kwargs = {'alpha' : 0.1,
+kwargs = {'alpha' : 0.01,
           'm': 50,
           'r': 0.2,
           'diagonal': False
