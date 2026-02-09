@@ -6,59 +6,46 @@ from tqdm import tqdm
 import laboratory as lab
 from auxiliary import mags_onestep_1d
 
-kwargs_1 = {'alpha' : 0.1,
-          'm': 50,
-          'r': 0.6,
-          'diagonal': False
-          }
-kwargs_2 = {'alpha' : 0.05,
-          'm': 5,
-          'r': 0.2,
-          'diagonal': False
-          }
-kwargs_3 = {'alpha' : 0.02,
-          'm': 5,
-          'r': 0.2,
-          'diagonal': False
-          }
-# there is a problem here with the theoretical accuracy of results
-kwargs_4 = {'alpha' : 0.02,
-          'm': 5,
-          'r': 0.4,
-          'diagonal': False
-          }
-kwargs_5 = {'alpha' : 0.02,
-          'm': 5,
-          'r': 0.5,
-          'diagonal': False
-          }
-kwargs_6 = {'alpha' : 0.02,
-          'm': 5,
-          'r': 0.7,
-          'diagonal': False
-          }
-kwargs_7 = {'alpha' : 0.02,
-          'm': 20,
-          'r': 0.7,
-          'diagonal': False
-          }
-kwargs_8 = {'alpha' : 0.1,
-          'm': 50,
-          'r': 0.2,
-          'diagonal': False
-          }
-kwargs_9 = {'alpha' : 0.1,
-          'm': 20,
-          'r': 0.2,
-          'diagonal': False
-          }
-kwargs = kwargs_6
+kwargs_gen_hr = {'alpha' : 0.1,
+                 'm': 50,
+                 'r': 0.6,
+                 'p': 0.9,
+                 'diagonal': False
+                 }
+
+kwargs_of = {'alpha' : 0.02,
+             'm': 5,
+             'r': 0.2,
+             'p': 0.5,
+             'diagonal': False
+             }
+
+kwargs_gen_lr = {'alpha' : 0.02,
+                 'm': 5,
+                 'r': 0.7,
+                 'p': 0.9,
+                 'diagonal': False
+                 }
+
+kwargs_sg = {'alpha' : 0.1,
+             'm': 20,
+             'r': 0.2,
+             'p': 0.9,
+             'diagonal': False
+             }
+
+kwargs = kwargs_sg
 neurons = 1000
 samples = 10
 max_it_mc = 200
+t = 0
+reduced = 'partial'
+r = kwargs['r']
+p = kwargs['p']
+kwargs.pop('p')
 
 # experimental spectrum
-experiment = lab.Experiment(directory = 'Data', func = exp.spectrum, neurons = neurons, **kwargs)
+experiment = lab.Experiment(directory = 'Data', func = exp.spectrum, neurons = neurons, t = t, **kwargs)
 experiment.create()
 experiment.run_to(samples)
 spec = experiment.read()
@@ -80,11 +67,11 @@ plt.show()
 
 p_values = np.linspace(1,0.1, num = 10)
 magarc_mean, magarc_std, = mags_onestep_1d(x_arg = 'p', x_values = p_values, samples = samples, neurons = neurons,
-                                           initial = 'arc', attractor = 'arc', **kwargs)
+                                           initial = 'arc', attractor = 'arc', t = t, reduced = reduced, **kwargs)
 parc_std=plt.errorbar(p_values, magarc_mean, magarc_std, linestyle='None', marker='^', color = 'blue')
 
 magex_mean, magex_std = mags_onestep_1d(x_arg = 'p', x_values = p_values, samples = samples, neurons = neurons,
-                                        initial = 'ex', attractor = 'ex', **kwargs)
+                                        initial = 'ex', attractor = 'ex', reduced = reduced, t = t, **kwargs)
 pex_std=plt.errorbar(p_values, magex_mean, magex_std, linestyle='None', marker='^', color = 'orange')
 
 ps = np.linspace(1, 0, num = 100, endpoint = False)
@@ -107,10 +94,10 @@ plt.title('One-step magnetizations')
 plt.show()
 
 experiment = lab.Experiment(directory = 'Data', func = exp.attraction_mc, neurons = neurons, initial = 'arc',
-                            max_it = max_it_mc, **kwargs)
+                            max_it = max_it_mc, p = r, reduced = reduced, t = t, **kwargs)
 experiment.create()
 experiment.run_to(samples)
-mags_arc_mc, mags_ex_mc, errors_mc = experiment.read()
+mags_arc_mc, mags_ex_mc, its_mc, errors_mc = experiment.read()
 
 plt.hist(np.ravel(mags_arc_mc), bins = 'fd', density = True, color = 'blue')
 plt.xlim(0,1)
@@ -130,13 +117,13 @@ plt.title('Attractiveness of examples, starting from a new example')
 
 plt.show()
 
-print(f'Max final error across all first samples was {np.max(errors_mc)}')
+print(f'Max final error {np.max(errors_mc)} and iteration {np.max(its_mc)} across all first samples.')
 
-experiment = lab.Experiment(directory = 'Data', func = exp.attraction_mc_red, neurons = neurons, initial = 'arc', p =1,
-                            max_it = max_it_mc, reduced = True, **kwargs)
+experiment = lab.Experiment(directory = 'Data', func = exp.attraction_mc, neurons = neurons, initial = 'arc', p =1,
+                            reduced = reduced, max_it = max_it_mc, t = t, **kwargs)
 experiment.create()
 experiment.run_to(samples)
-mags_arc_mc, mags_ex_mc, errors_mc = experiment.read()
+mags_arc_mc, mags_ex_mc, its_mc, errors_mc = experiment.read()
 
 plt.hist(np.ravel(mags_arc_mc), bins = 'fd', density = True, color = 'blue')
 plt.xlim(0,1)
@@ -156,16 +143,15 @@ plt.title('Attractiveness of examples, starting from a stored archetype')
 
 plt.show()
 
-print(f'Max final error across all second samples was {np.max(errors_mc)}')
+print(f'Max final error {np.max(errors_mc)} and iteration {np.max(its_mc)} across all second samples.')
 
 run_last = True
 if run_last:
-    p = 0.5
-    experiment = lab.Experiment(directory = 'Data', func = exp.attraction_mc_red, neurons = neurons, initial = 'ex', p =p,
-                                max_it = max_it_mc, reduced = True, **kwargs)
+    experiment = lab.Experiment(directory = 'Data', func = exp.attraction_mc, neurons = neurons, initial = 'ex', p =p,
+                                reduced = reduced, max_it = max_it_mc, t = t, **kwargs)
     experiment.create()
     experiment.run_to(samples)
-    mags_arc_mc, mags_ex_mc, errors_mc = experiment.read()
+    mags_arc_mc, mags_ex_mc, its_mc, errors_mc = experiment.read()
 
     plt.hist(np.ravel(mags_arc_mc), bins = 'fd', density = True, color = 'blue')
     plt.xlim(0,1)
@@ -185,4 +171,4 @@ if run_last:
 
     plt.show()
 
-    print(f'Max final error across all second samples was {np.max(errors_mc)}')
+    print(f'Max final error {np.max(errors_mc)} and iteration {np.max(its_mc)} across all third samples.')
