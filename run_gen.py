@@ -52,7 +52,7 @@ kwargs_9 = {'alpha' : 0.1,
           'r': 0.2,
           'diagonal': False
           }
-kwargs = kwargs_9
+kwargs = kwargs_6
 neurons = 1000
 samples = 10
 max_it_mc = 200
@@ -72,7 +72,7 @@ xs = np.linspace(xmin, xmax, num = 100)
 # compute theoretical spectrum
 ys = [spec_func(x) for x in tqdm(xs)]
 plt.plot(xs, ys)
-# plt.ylim(0,1)
+plt.ylim(0,1)
 plt.xlabel(r'$\lambda$')
 plt.ylabel(r'$\rho(\lambda)$')
 plt.title('Spectrum')

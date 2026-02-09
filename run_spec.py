@@ -4,9 +4,9 @@ from matplotlib import pyplot as plt
 import theory
 from tqdm import tqdm
 
-kwargs = {'alpha' : 0.01,
-          'm': 50,
-          'r': 0.2,
+kwargs = {'alpha' : 0.02,
+          'm': 5,
+          'r': 0.8,
           'diagonal': False
           }
 
