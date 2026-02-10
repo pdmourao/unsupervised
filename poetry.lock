@@ -334,7 +334,7 @@ numpy = "^2.4.2"
 type = "git"
 url = "https://github.com/pdmourao/laboratory.git"
 reference = "HEAD"
-resolved_reference = "db01a8413bb9a45793822d44c39821a9443c7256"
+resolved_reference = "69d3a8969d400a8c0ed390fc99f16ec317dad534"
 
 [[package]]
 name = "matplotlib"

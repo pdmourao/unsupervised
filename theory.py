@@ -3,7 +3,7 @@ import math
 import scipy
 
 # gives the spectral distribution, predicted with Edwards-Jones
-def spec_dist(alpha, r, m, diagonal = True):
+def spec_dist(alpha, r, m, t, diagonal = True):
 
     if diagonal:
         shift = 0
@@ -15,8 +15,9 @@ def spec_dist(alpha, r, m, diagonal = True):
         lm = r ** 2 * (1 - np.sqrt(alpha)) ** 2 + alpha * (1 - r ** 2)
         def dist(x):
             x += shift
+            x = x / (1 + t - t * x)
             if lm < x < lp:
-                return np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * r ** 2 * (x - alpha * (1 - r ** 2)))
+                return (1 + t) / ((1 + t * x) ** 2) * np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * r ** 2 * (x - alpha * (1 - r ** 2)))
             else:
                 return 0
 
@@ -25,8 +26,9 @@ def spec_dist(alpha, r, m, diagonal = True):
         lm = (1 - np.sqrt(alpha)) ** 2
         def dist(x):
             x += shift
+            x = x / (1 + t - t * x)
             if lm < x < lp:
-                return np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * x)
+                return (1 + t) / ((1 + t * x) ** 2) * np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * x)
             else:
                 return 0
 
@@ -37,6 +39,7 @@ def spec_dist(alpha, r, m, diagonal = True):
 
         def dist(x):
             x += shift
+            x = x / (1 + t - t * x)
             a = x
             b = (m * alpha - 1) - x * (mu1 + mu2)
             c = (1 - alpha) * mu1 + (1 - alpha * (m - 1)) * mu2 + x * mu1 * mu2
@@ -50,7 +53,7 @@ def spec_dist(alpha, r, m, diagonal = True):
             if disc < 0:
                 return 0
             else:
-                return np.sqrt(3) / math.pi / 2 * (np.cbrt(-q / 2 + np.sqrt(disc)) + np.cbrt(q / 2 + np.sqrt(disc)))
+                return (1 + t) / ((1 + t * x) ** 2) * np.sqrt(3) / math.pi / 2 * (np.cbrt(-q / 2 + np.sqrt(disc)) + np.cbrt(q / 2 + np.sqrt(disc)))
 
     return dist
 
@@ -100,15 +103,15 @@ def double_peak_mags(probs, avs, stds):
     return np.sum(peaks)
 
 # peak_args turns associative memories inputs into the corresponding set of peaks
-def peak_args(alpha, r, m, p=1, attractor = 'arc', diagonal = False):
-
+def peak_args(alpha, r, m, t = 0, p=1, attractor = 'arc', diagonal = False):
+    assert t == 0, '1-step magnetizations not determined for t > 0.'
     if diagonal:
         shift=alpha
     else:
         shift=0
 
     if alpha > 0:
-        mu2 = J_moments(2, measure = spec_dist(alpha, r, m), peak_coordinates = peak(alpha, r, m))
+        mu2 = J_moments(2, measure = spec_dist(alpha, r, m, t), peak_coordinates = peak(alpha, r, m))
         # print(mu2-alpha**2)
     else:
         mu2 = 0

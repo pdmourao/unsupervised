@@ -91,7 +91,7 @@ def spec_nosave(samples, neurons, alpha, r, m, t, entropy = None, diagonal = Fal
 
 def spectrum(entropy, neurons, alpha, r, m, t, diagonal):
 
-    system = dream(neurons=neurons, k=int(alpha * neurons), r=r, m=m, rng_ss = np.random.SeedSequence(entropy),
+    system = dream(neurons=neurons, k=int(alpha * neurons), r=r, m=m, t=t, rng_ss = np.random.SeedSequence(entropy),
                        diagonal=diagonal)
     system.set_interaction()
 

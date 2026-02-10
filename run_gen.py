@@ -6,46 +6,49 @@ from tqdm import tqdm
 import laboratory as lab
 from auxiliary import mags_onestep_1d
 
-kwargs_gen_hr = {'alpha' : 0.1,
+kwargs_gen_hr = {'t': 0,
+                 'alpha' : 0.1,
                  'm': 50,
                  'r': 0.6,
                  'p': 0.9,
                  'diagonal': False
                  }
 
-kwargs_of = {'alpha' : 0.02,
+kwargs_of = {'t': 0,
+             'alpha' : 0.02,
              'm': 5,
              'r': 0.2,
              'p': 0.5,
              'diagonal': False
              }
 
-kwargs_gen_lr = {'alpha' : 0.02,
+kwargs_gen_lr = {'t': 0,
+                 'alpha' : 0.02,
                  'm': 5,
                  'r': 0.7,
                  'p': 0.9,
                  'diagonal': False
                  }
 
-kwargs_sg = {'alpha' : 0.1,
+kwargs_sg = {'t': 0,
+             'alpha' : 0.1,
              'm': 20,
              'r': 0.2,
              'p': 0.9,
              'diagonal': False
              }
 
-kwargs = kwargs_sg
+kwargs = kwargs_of
 neurons = 1000
-samples = 10
+samples = 100
 max_it_mc = 200
-t = 0
 reduced = 'partial'
 r = kwargs['r']
 p = kwargs['p']
 kwargs.pop('p')
 
 # experimental spectrum
-experiment = lab.Experiment(directory = 'Data', func = exp.spectrum, neurons = neurons, t = t, **kwargs)
+experiment = lab.Experiment(directory = 'Data', func = exp.spectrum, neurons = neurons, **kwargs)
 experiment.create()
 experiment.run_to(samples)
 spec = experiment.read()
@@ -67,11 +70,11 @@ plt.show()
 
 p_values = np.linspace(1,0.1, num = 10)
 magarc_mean, magarc_std, = mags_onestep_1d(x_arg = 'p', x_values = p_values, samples = samples, neurons = neurons,
-                                           initial = 'arc', attractor = 'arc', t = t, reduced = reduced, **kwargs)
+                                           initial = 'arc', attractor = 'arc', reduced = reduced, **kwargs)
 parc_std=plt.errorbar(p_values, magarc_mean, magarc_std, linestyle='None', marker='^', color = 'blue')
 
 magex_mean, magex_std = mags_onestep_1d(x_arg = 'p', x_values = p_values, samples = samples, neurons = neurons,
-                                        initial = 'ex', attractor = 'ex', reduced = reduced, t = t, **kwargs)
+                                        initial = 'ex', attractor = 'ex', reduced = reduced, **kwargs)
 pex_std=plt.errorbar(p_values, magex_mean, magex_std, linestyle='None', marker='^', color = 'orange')
 
 ps = np.linspace(1, 0, num = 100, endpoint = False)
@@ -94,7 +97,7 @@ plt.title('One-step magnetizations')
 plt.show()
 
 experiment = lab.Experiment(directory = 'Data', func = exp.attraction_mc, neurons = neurons, initial = 'arc',
-                            max_it = max_it_mc, p = r, reduced = reduced, t = t, **kwargs)
+                            max_it = max_it_mc, p = r, reduced = reduced, **kwargs)
 experiment.create()
 experiment.run_to(samples)
 mags_arc_mc, mags_ex_mc, its_mc, errors_mc = experiment.read()
@@ -120,7 +123,7 @@ plt.show()
 print(f'Max final error {np.max(errors_mc)} and iteration {np.max(its_mc)} across all first samples.')
 
 experiment = lab.Experiment(directory = 'Data', func = exp.attraction_mc, neurons = neurons, initial = 'arc', p =1,
-                            reduced = reduced, max_it = max_it_mc, t = t, **kwargs)
+                            reduced = reduced, max_it = max_it_mc, **kwargs)
 experiment.create()
 experiment.run_to(samples)
 mags_arc_mc, mags_ex_mc, its_mc, errors_mc = experiment.read()
@@ -148,7 +151,7 @@ print(f'Max final error {np.max(errors_mc)} and iteration {np.max(its_mc)} acros
 run_last = True
 if run_last:
     experiment = lab.Experiment(directory = 'Data', func = exp.attraction_mc, neurons = neurons, initial = 'ex', p =p,
-                                reduced = reduced, max_it = max_it_mc, t = t, **kwargs)
+                                reduced = reduced, max_it = max_it_mc, **kwargs)
     experiment.create()
     experiment.run_to(samples)
     mags_arc_mc, mags_ex_mc, its_mc, errors_mc = experiment.read()
@@ -163,7 +166,7 @@ if run_last:
     plt.show()
 
     plt.hist(np.ravel(mags_ex_mc), bins = 'fd', density = True, color = 'orange')
-    plt.xlim(0,1)
+    plt.xlim(0,1.1)
 
     plt.xlabel(r'$m_\infty$')
     plt.ylabel(r'$p(m_\infty)$')
