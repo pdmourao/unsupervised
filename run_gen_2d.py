@@ -50,8 +50,8 @@ ax.set_xlim(x_min, x_max)
 ax.set_ylim(y_min, y_max)
 
 ms = np.linspace(1, 50, 1000)
-seps = [theory.sep_r(alpha = rank / m, m = m) for m in tqdm(ms)]
-ms_red, seps_red = zip(*[(x, y) for x, y in zip(ms, seps) if y is not None])
+seps = [theory.sep_r(alpha = rank / m, m = m) for m in tqdm(ms[1:])]
+ms_red, seps_red = zip(*[(x, y) for x, y in zip(ms[1:], seps) if y is not None])
 ax.plot(ms_red, seps_red, color = 'black', linestyle = 'dashed')
 
 if draw_capacity:
