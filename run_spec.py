@@ -3,23 +3,28 @@ import numpy as np
 from matplotlib import pyplot as plt
 import theory
 from tqdm import tqdm
+import sys
 
-kwargs = {'alpha' : 0.02,
-          'm': 5,
-          'r': 0.8,
+kwargs = {'t' : 0,
+          'm': 10,
+          'r': 0.6,
+          'alpha': 0.1,
           'diagonal': False
           }
 
-
+kwargs['alpha'] = theory.sep_alpha(kwargs['r'], kwargs['m'])
+print(kwargs['alpha'])
 # function for theoretical spectrum
 spec_func = theory.spec_dist(**kwargs)
 
-xs = np.linspace(0, 1, num = 100)
+xs = np.linspace(-kwargs['alpha'], 1, num = 10000)
 # compute theoretical spectrum
 ys = [spec_func(x) for x in tqdm(xs)]
 plt.plot(xs, ys)
-# plt.ylim(0,1)
+plt.ylim(0,1)
 plt.show()
+
+sys.exit()
 
 ps = np.linspace(1, 0, num = 100, endpoint = False)
 

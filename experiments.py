@@ -130,7 +130,7 @@ def attraction_mc(entropy, neurons, alpha, r, m, t, p, initial, max_it, diagonal
 
     t0 = time()
 
-    system = dream(neurons = neurons, k = int(alpha * neurons), r = r, m = m,
+    system = dream(neurons = neurons, k = int(alpha * neurons), r = r, m = m, t = t,
                    rng_ss = np.random.SeedSequence(entropy), diagonal = diagonal)
     system.set_interaction()
 
@@ -153,3 +153,35 @@ def attraction_mc(entropy, neurons, alpha, r, m, t, p, initial, max_it, diagonal
 
     return mags_arc, mags_ex, len(errors), errors[-1]
 
+def gen_mr(entropy, neurons, rank, t, m_values, r_values, p, initial, max_it, diagonal, reduced):
+
+    len_x = len(m_values)
+    len_y = len(r_values)
+
+    rng_list = np.random.SeedSequence(entropy).spawn(len_x * len_y)
+    mags_arc = np.empty((len_x, len_y), dtype = float)
+    mags_ex = np.empty((len_x, len_y), dtype=float)
+    its = np.empty((len_x, len_y), dtype=int)
+    errors = np.empty((len_x, len_y), dtype=float)
+
+    with tqdm(total = len_x * len_y) as pbar:
+        for idx_m, m in enumerate(m_values):
+            for idx_r, r in enumerate(r_values):
+
+                this_ss = rng_list[idx_m * len(r_values) + idx_r]
+                system = dream(neurons=neurons, k=int(rank * neurons / m), r=r, m=m, t=t,
+                               rng_ss=this_ss, diagonal=diagonal)
+                system.set_interaction()
+
+                system.initial_state = system.gen_samples(system.state(initial, reduced=reduced), p=p)
+                final_state, error_list = system.simulate_zero_T(max_it=max_it)
+
+                mags_arc[idx_m, idx_r] = np.mean(system.state('arc', reduced=reduced) * final_state, axis=-1)
+                mags_ex[idx_m, idx_r] = np.mean(system.state('ex', reduced=reduced) * final_state, axis=-1)
+
+                its[idx_m, idx_r] = len(error_list)
+                errors[idx_m, idx_r] = error_list[-1]
+
+                pbar.update(1)
+
+    return mags_arc, mags_ex, its, errors

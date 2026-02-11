@@ -170,3 +170,6 @@ def sep_alpha(r, m):
     p1 = (m-1)/m
     p2 = 1/m
     return (mu2-mu1)**2/(m*(np.cbrt(p1*mu1**2)+np.cbrt(p2*mu2**2))**3)
+
+def sep_r(alpha, m, tol = 1e-4):
+    return findroot(lambda r: sep_alpha(r, m) - alpha, 0, 1, tol = tol)
