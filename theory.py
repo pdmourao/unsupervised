@@ -146,17 +146,14 @@ def mags_int(*args, **kwargs):
 # bissection method
 def findroot(f, x1, x2, tol = 1e-3):
     if f(x1) * f(x2) > 0:
-        if f(x1) * (f(x2) - f(x1)) > 0:
-            return x1
-        else:
-            return x2
-    x = (x2 - x1)/2
+        return None
+    x = x1 + (x2 - x1)/2
     while abs(x2-x1) > tol:
-        x = x1 + (x2 - x1)/2
         if f(x) * f(x1) > 0:
             x1 = x
         else:
             x2 = x
+        x = x1 + (x2 - x1) / 2
     return x
 
 def gen(arg, x1, x2, tol = 1e-3, **kwargs):
@@ -173,3 +170,24 @@ def sep_alpha(r, m):
 
 def sep_r(alpha, m, tol = 1e-4):
     return findroot(lambda r: sep_alpha(r, m) - alpha, 0, 1, tol = tol)
+
+
+def dist_roots(alpha, r, m, t, tol = 1e-4):
+    f = spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = True)
+    xs = np.arange(1, 0, -tol)[::-1]
+    roots = []
+    for idx_x, x0 in enumerate(xs[:-1]):
+        x1 = xs[idx_x + 1]
+        if f(x0) == 0 and f(x1) > 0 or f(x0) > 0 and f(x1) == 0:
+            roots.append((x1+x0)/2)
+    return roots
+
+
+def peak_sep(alpha, r, m, t, tol = 1e-4):
+    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol)
+    if len(roots) == 4:
+        return roots[2] - roots[1]
+    elif len(roots) == 2:
+        return 0
+    else:
+        raise Exception(rf'{len(roots)} roots found for $\alpha$ = {alpha}, $r$ = {r}, $M$ = {m}, $t$ = {t}')

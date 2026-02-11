@@ -1,0 +1,40 @@
+import numpy as np
+import laboratory as lab
+import experiments as exp
+from matplotlib import pyplot as plt
+from tqdm import tqdm
+import theory
+
+neurons = 1000
+alpha = 0.02
+m = 5
+r = 0.6
+p = 0.9
+samples = 10
+max_it = 200
+reduced = 'full'
+diagonal = False
+initial = 'ex'
+
+
+t_values = np.linspace(0, 10, num = 101)
+
+experiment = lab.Experiment(directory = 'Data', func = exp.gen_t, m = m, r = r, t_values = t_values,
+                            neurons = neurons, alpha = alpha, p = p, reduced = reduced, diagonal = diagonal,
+                            initial = initial, max_it = max_it)
+experiment.create()
+experiment.run_to(samples)
+m_arc, m_ex, its, errors = experiment.read()
+
+print(f'Maximum recorded iterations and errors were {np.max(its)} and {np.max(errors)}, respectively')
+
+fig, axs = plt.subplots(2, 1)
+axs[0].errorbar(t_values, np.mean(m_arc, axis = 0), np.std(m_arc, axis = 0))
+axs[1].plot(t_values, [theory.peak_sep(alpha = alpha, r = r, m = m, t = t) for t in tqdm(t_values)])
+
+axs[1].set_xlabel(r'$t$')
+axs[0].set_ylabel(r'$m$')
+axs[0].set_ylim(0,1)
+axs[1].set_ylabel(r'$\Delta\lambda$')
+
+plt.show()

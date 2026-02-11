@@ -185,3 +185,32 @@ def gen_mr(entropy, neurons, rank, t, m_values, r_values, p, initial, max_it, di
                 pbar.update(1)
 
     return mags_arc, mags_ex, its, errors
+
+
+def gen_t(entropy, neurons, alpha, t_values, m, r, p, initial, max_it, diagonal, reduced):
+
+    len_x = len(t_values)
+
+    rng_list = np.random.SeedSequence(entropy).spawn(len_x)
+    mags_arc = np.empty(len_x, dtype = float)
+    mags_ex = np.empty(len_x, dtype=float)
+    its = np.empty(len_x, dtype=int)
+    errors = np.empty(len_x, dtype=float)
+
+    for idx_t, t in enumerate(tqdm(t_values)):
+        this_ss = rng_list[idx_t]
+        system = dream(neurons=neurons, k=int(alpha * neurons), r=r, m=m, t=t,
+                       rng_ss=this_ss, diagonal=diagonal)
+        system.set_interaction()
+
+        system.initial_state = system.gen_samples(system.state(initial, reduced=reduced), p=p)
+        final_state, error_list = system.simulate_zero_T(max_it=max_it)
+
+        mags_arc[idx_t] = np.mean(system.state('arc', reduced=reduced) * final_state, axis=-1)
+        mags_ex[idx_t] = np.mean(system.state('ex', reduced=reduced) * final_state, axis=-1)
+
+        its[idx_t] = len(error_list)
+        errors[idx_t] = error_list[-1]
+
+
+    return mags_arc, mags_ex, its, errors
