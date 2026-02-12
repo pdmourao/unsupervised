@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import scipy
+from tqdm import tqdm
 
 # gives the spectral distribution, predicted with Edwards-Jones
 def spec_dist(alpha, r, m, t, diagonal = True):
@@ -168,8 +169,8 @@ def sep_alpha(r, m):
     p2 = 1/m
     return (mu2-mu1)**2/(m*(np.cbrt(p1*mu1**2)+np.cbrt(p2*mu2**2))**3)
 
-def sep_r(alpha, m, tol = 1e-4):
-    return findroot(lambda r: sep_alpha(r, m) - alpha, 0, 1, tol = tol)
+def sep_r(alpha, m, tol = 1e-4, alpha_c = 0):
+    return findroot(lambda r: sep_alpha(r, m) - alpha + alpha_c, 0, 1, tol = tol)
 
 
 def dist_roots(alpha, r, m, t, tol = 1e-4):
@@ -191,3 +192,15 @@ def peak_sep(alpha, r, m, t, tol = 1e-4):
         return 0
     else:
         raise Exception(rf'{len(roots)} roots found for $\alpha$ = {alpha}, $r$ = {r}, $M$ = {m}, $t$ = {t}')
+
+def peak_sep_t(t_values, alpha, r, m, tol):
+    roots_v = np.empty(len(t_values), dtype = float)
+    for idx_t, t in enumerate(tqdm(t_values)):
+        roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol)
+        if len(roots) == 4:
+            roots_v[idx_t] = roots[2] - roots[1]
+        elif len(roots) == 2:
+            roots_v[idx_t] = 0
+        else:
+            raise Exception(rf'{len(roots)} roots found for $\alpha$ = {alpha}, $r$ = {r}, $M$ = {m}, $t$ = {t}')
+    return roots_v

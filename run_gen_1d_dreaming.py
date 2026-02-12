@@ -8,7 +8,7 @@ import theory
 neurons = 1000
 alpha = 0.02
 m = 5
-r = 0.6
+r = 0.7
 p = 0.9
 samples = 10
 max_it = 200
@@ -30,11 +30,15 @@ print(f'Maximum recorded iterations and errors were {np.max(its)} and {np.max(er
 
 fig, axs = plt.subplots(2, 1)
 axs[0].errorbar(t_values, np.mean(m_arc, axis = 0), np.std(m_arc, axis = 0))
-axs[1].plot(t_values, [theory.peak_sep(alpha = alpha, r = r, m = m, t = t) for t in tqdm(t_values)])
+
+predict = lab.core.prediction(directory = 'Data', func = theory.peak_sep_t, alpha = alpha, r = r, m = m,
+                              t_values = t_values, tol = 1e-4)
+axs[1].plot(t_values, predict)
 
 axs[1].set_xlabel(r'$t$')
 axs[0].set_ylabel(r'$m$')
 axs[0].set_ylim(0,1)
 axs[1].set_ylabel(r'$\Delta\lambda$')
 
+axs[0].set_title(rf'$\alpha = {alpha}$, $r = {r}$, $M = {m}$, $p = {p}$')
 plt.show()

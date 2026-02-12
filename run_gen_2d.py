@@ -6,10 +6,10 @@ from tqdm import tqdm
 import theory
 
 neurons = 1000
-rank = 0.1
-t = 0
+rank = 2
+t = 1
 p = 0.9
-samples = 50
+samples = 1
 max_it = 200
 reduced = 'full'
 diagonal = False
@@ -50,7 +50,7 @@ ax.set_xlim(x_min, x_max)
 ax.set_ylim(y_min, y_max)
 
 ms = np.linspace(1, 50, 1000)
-seps = [theory.sep_r(alpha = rank / m, m = m) for m in tqdm(ms[1:])]
+seps = [theory.sep_r(alpha = rank / m, m = m, alpha_c = -alpha_c) for m in tqdm(ms[1:])]
 ms_red, seps_red = zip(*[(x, y) for x, y in zip(ms[1:], seps) if y is not None])
 ax.plot(ms_red, seps_red, color = 'black', linestyle = 'dashed')
 
@@ -60,7 +60,7 @@ if draw_capacity:
 ax.set_xlabel(r'$M$')
 ax.set_ylabel(r'$r$')
 
-ax.set_title(rf'Archetype recall for $\alpha M = {rank}$')
+ax.set_title(rf'Archetype recall for $\alpha M = {rank}$, $t = {t}$')
 plt.show()
 
 
@@ -80,5 +80,5 @@ if draw_capacity:
 ax.set_xlabel(r'$M$')
 ax.set_ylabel(r'$r$')
 
-ax.set_title(rf'Example recall for $\alpha M = {rank}$')
+ax.set_title(rf'Example recall for $\alpha M = {rank}$, $t = {t}$')
 plt.show()
