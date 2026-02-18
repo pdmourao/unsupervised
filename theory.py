@@ -188,6 +188,8 @@ def peak_sep(alpha, r, m, t, tol = 1e-4):
     roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol)
     if len(roots) == 4:
         return roots[2] - roots[1]
+    elif len(roots) == 3:
+        return roots[1] - roots[0]
     elif len(roots) == 2:
         return 0
     else:
@@ -196,11 +198,5 @@ def peak_sep(alpha, r, m, t, tol = 1e-4):
 def peak_sep_t(t_values, alpha, r, m, tol):
     roots_v = np.empty(len(t_values), dtype = float)
     for idx_t, t in enumerate(tqdm(t_values)):
-        roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol)
-        if len(roots) == 4:
-            roots_v[idx_t] = roots[2] - roots[1]
-        elif len(roots) == 2:
-            roots_v[idx_t] = 0
-        else:
-            raise Exception(rf'{len(roots)} roots found for $\alpha$ = {alpha}, $r$ = {r}, $M$ = {m}, $t$ = {t}')
+        roots_v[idx_t] = peak_sep(alpha = alpha, r = r, m = m, t = t, tol = tol)
     return roots_v
