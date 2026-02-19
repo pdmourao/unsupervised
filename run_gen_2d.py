@@ -39,7 +39,7 @@ y_min -= step_y
 y_max += step_y
 
 ms = np.linspace(1, 50, 1000)
-seps = [theory.sep_r(alpha=rank / m, m=m, alpha_c=-alpha_c) for m in tqdm(ms[1:])]
+seps = [theory.sep_r(alpha=rank / m, m=m) for m in tqdm(ms[1:])]
 ms_red, seps_red = zip(*[(x, y) for x, y in zip(ms[1:], seps) if y is not None])
 
 

@@ -22,7 +22,8 @@ experiment = lab.Experiment(directory = 'Data_remote', func = exp.gen_t, m = m, 
                             neurons = neurons, alpha = alpha, p = p, reduced = reduced, diagonal = diagonal,
                             initial = initial, max_it = max_it)
 m_arc, m_ex, its, errors = experiment.read()
-print(m_arc)
+print(theory.sep_alpha(r,m))
+print(theory.sep_r(alpha = alpha,m = m))
 print(f'Maximum recorded iterations and errors were {np.max(its)} and {np.max(errors)}, respectively')
 
 fig, axs = plt.subplots(2, 1)
@@ -38,4 +39,14 @@ axs[0].set_ylim(0,1)
 axs[1].set_ylabel(r'$\Delta\lambda$')
 
 axs[0].set_title(rf'$\alpha = {alpha}$, $r = {r}$, $M = {m}$, $p = {p}$')
+plt.show()
+
+rank = alpha*m
+mmin = 10
+mmax = 500
+ms = np.linspace(mmin, mmax, 100)
+seps = [theory.sep_r(alpha = rank / m, m = m) for m in ms]
+plt.plot(ms, seps)
+plt.ylim(0, 1)
+plt.scatter([m], [r])
 plt.show()

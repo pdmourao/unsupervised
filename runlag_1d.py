@@ -3,9 +3,9 @@ import laboratory as lab
 import experiments as exp
 
 neurons = 1000
-alpha = 0.2
-m = 10
-r = 0.5
+alpha = 0.05
+m = 40
+r = 0.4
 p = 0.9
 samples = 10
 max_it = 200
