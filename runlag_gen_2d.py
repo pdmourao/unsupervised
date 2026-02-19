@@ -2,13 +2,13 @@ import numpy as np
 import laboratory as lab
 import experiments as exp
 
-samples = 30
+samples = 20
 
 r_values = np.linspace(1, 0, num = 50, endpoint = False)[::-1]
 m_values = np.linspace(1, 50, num = 50, dtype = int)
 
 kwargs = {'neurons': 1000,
-          'rank': 2,
+          'rank': 0.5,
           'max_it': 200,
           'reduced': 'full',
           'diagonal': False,
