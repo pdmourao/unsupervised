@@ -34,27 +34,33 @@ kwargs_sg = {'t': 1,
 
 # kwargs = kwargs_gen_hr
 neurons = 1000
-alpha = 0.02
-m = 5
+alpha = 0.2
+m = 50
 r = 0.6
-t = 1
-samples = 10
-diagonal = True
+t_values = [0, 4, 10, 30]
+
+def plot_spec(ax, t, ylim = None):
 # function for theoretical spectrum
-spec_func = theory.spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = True)
+    spec_func = theory.spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = True)
 
-xmin, xmax = 0, 1
-xs = np.linspace(xmin, xmax, num = 100)
-# compute theoretical spectrum
-ys = [spec_func(x) for x in tqdm(xs)]
+    xmin, xmax = 0, 1
+    xs = np.linspace(xmin, xmax, num = 100)
+    # compute theoretical spectrum
+    ys = [spec_func(x) for x in tqdm(xs)]
 
-print(theory.dist_roots(alpha = alpha, r = r, m = m, t = t))
+    ax.plot(xs, ys)
+    if ylim is not None:
+        ax.set_ylim(0,ylim)
+    ax.set_xlabel(r'$\lambda$')
+    ax.set_ylabel(r'$\rho(\lambda)$')
+    ax.label_outer()
+    ax.set_title(rf'$t = {t}$')
 
-plt.plot(xs, ys)
+fig, axs = plt.subplots(len(t_values),1, sharex=True)
 
-plt.ylim(0,1)
-plt.xlabel(r'$\lambda$')
-plt.ylabel(r'$\rho(\lambda)$')
-plt.title('Spectrum')
+for idx, ax in enumerate(axs.flat):
+    t = t_values[idx]
+    plot_spec(ax, t)
+
 plt.show()
 

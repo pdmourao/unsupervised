@@ -4,7 +4,7 @@ import experiments as exp
 
 neurons = 1000
 alpha = 0.2
-m = 50
+m = 10
 r = 0.5
 p = 0.9
 samples = 10

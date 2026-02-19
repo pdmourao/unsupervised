@@ -5,12 +5,11 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 import theory
 
-neurons = 5000
+neurons = 1000
 alpha = 0.2
-m = 10
-r = 0.8
+m = 50
+r = 0.5
 p = 0.9
-samples = 10
 max_it = 200
 reduced = 'full'
 diagonal = False
@@ -23,7 +22,7 @@ experiment = lab.Experiment(directory = 'Data_remote', func = exp.gen_t, m = m, 
                             neurons = neurons, alpha = alpha, p = p, reduced = reduced, diagonal = diagonal,
                             initial = initial, max_it = max_it)
 m_arc, m_ex, its, errors = experiment.read()
-
+print(m_arc)
 print(f'Maximum recorded iterations and errors were {np.max(its)} and {np.max(errors)}, respectively')
 
 fig, axs = plt.subplots(2, 1)
@@ -35,10 +34,8 @@ axs[1].plot(t_values, predict)
 
 axs[1].set_xlabel(r'$t$')
 axs[0].set_ylabel(r'$m$')
-axs[0].set_ylim(0.99,1)
+axs[0].set_ylim(0,1)
 axs[1].set_ylabel(r'$\Delta\lambda$')
 
 axs[0].set_title(rf'$\alpha = {alpha}$, $r = {r}$, $M = {m}$, $p = {p}$')
 plt.show()
-
-print(m_arc[3])
