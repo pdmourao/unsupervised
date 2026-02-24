@@ -18,7 +18,7 @@ def spec_dist(alpha, r, m, t, diagonal = True):
             x += shift
             x = x / (1 + t - t * x)
             if lm < x < lp:
-                return (1 + t) / ((1 + t * x) ** 2) * np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * r ** 2 * (x - alpha * (1 - r ** 2)))
+                return (1 + t * x) ** 2/ (1 + t) * np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * r ** 2 * (x - alpha * (1 - r ** 2)))
             else:
                 return 0
 
@@ -29,7 +29,7 @@ def spec_dist(alpha, r, m, t, diagonal = True):
             x += shift
             x = x / (1 + t - t * x)
             if lm < x < lp:
-                return (1 + t) / ((1 + t * x) ** 2) * np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * x)
+                return (1 + t * x) ** 2/ (1 + t) * np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * x)
             else:
                 return 0
 
@@ -54,7 +54,7 @@ def spec_dist(alpha, r, m, t, diagonal = True):
             if disc < 0:
                 return 0
             else:
-                return (1 + t) / ((1 + t * x) ** 2) * np.sqrt(3) / math.pi / 2 * (np.cbrt(-q / 2 + np.sqrt(disc)) + np.cbrt(q / 2 + np.sqrt(disc)))
+                return (1 + t * x) ** 2/ (1 + t) * np.sqrt(3) / math.pi / 2 * (np.cbrt(-q / 2 + np.sqrt(disc)) + np.cbrt(q / 2 + np.sqrt(disc)))
 
     return dist
 
@@ -84,7 +84,7 @@ def spec_integrator(integrand, measure, min_x=-np.inf, max_x=np.inf, peak_coordi
     return integrand(pos) * height + scipy.integrate.quad(lambda x: integrand(x) * measure(x), min_x, max_x)[0]
 
 # gives the moments of the J distribution
-def J_moments(n, measure, peak_coordinates):
+def J_moments(n, measure, peak_coordinates = (0,0)):
     def integrand(x):
         return x ** n
     return spec_integrator(integrand, measure=measure, peak_coordinates=peak_coordinates)
@@ -172,31 +172,83 @@ def sep_alpha(r, m):
 def sep_r(alpha, m, tol = 1e-4, alpha_c = 0):
     return findroot(lambda r: sep_alpha(r, m) - alpha + alpha_c, 0, 1, tol = tol)
 
-
-def dist_roots(alpha, r, m, t, tol = 1e-4):
+def dist_max(alpha, r, m, t, tol = 1e-2, x_max = 100):
     f = spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = True)
-    xs = np.arange(1, 0, -tol)[::-1]
+    for x in np.arange(1, x_max, tol)[::-1]:
+        if f(x) == 0:
+            x_max = x
+        else:
+            break
+    print(f'x_max determined to be {x_max}')
+    return x_max
+
+def dist_roots(alpha, r, m, t, x_max = None, tol = 1e-4):
+    if x_max is None:
+        x_max = dist_max(alpha, r, m, 0)
+    f = spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = True)
+    xs = np.arange(x_max, 0, -tol)[::-1]
+    roots_down = 0
+    roots_up = 0
     roots = []
     for idx_x, x0 in enumerate(xs[:-1]):
         x1 = xs[idx_x + 1]
-        if f(x0) == 0 and f(x1) > 0 or f(x0) > 0 and f(x1) == 0:
+        if f(x0) == 0 and f(x1) > 0:
             roots.append((x1+x0)/2)
+            roots_up += 1
+        elif f(x0) > 0 and f(x1) == 0:
+            roots.append((x1 + x0) / 2)
+            roots_down += 1
+    if len(roots) < 1 or len(roots) > 4 or roots_up > roots_down:
+        raise Exception(rf'{roots_up} ascending and {roots_down} descending roots ({roots}) found for $\alpha$ = {alpha}, $r$ = {r}, $M$ = {m}, $t$ = {t}')
     return roots
 
 
-def peak_sep(alpha, r, m, t, tol = 1e-4):
-    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol)
+def peak_sep(alpha, r, m, t, x_max = None, tol = 1e-4):
+    if x_max is None:
+        x_max = dist_max(alpha, r, m, 0)
+    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
     if len(roots) == 4:
         return roots[2] - roots[1]
     elif len(roots) == 3:
         return roots[1] - roots[0]
-    elif len(roots) == 2:
-        return 0
     else:
-        raise Exception(rf'{len(roots)} roots found for $\alpha$ = {alpha}, $r$ = {r}, $M$ = {m}, $t$ = {t}')
+        return 0
+
+def peak_cms(alpha, r, m, t, x_max=None, tol = 1e-4):
+    if x_max is None:
+        x_max = dist_max(alpha, r, m, 0)
+    measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
+    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
+    if len(roots) == 4:
+        cm1 = scipy.integrate.quad(lambda x: x * measure(x), roots[0], roots[1])[0]
+        norm1 = scipy.integrate.quad(lambda x: measure(x), roots[0], roots[1])[0]
+        cm2 = scipy.integrate.quad(lambda x: x * measure(x), roots[2], roots[3])[0]
+        norm2 = scipy.integrate.quad(lambda x: measure(x), roots[2], roots[3])[0]
+        return cm1/norm1, cm2/norm2
+    elif len(roots) == 3:
+        cm1 = scipy.integrate.quad(lambda x: x * measure(x), 0., roots[0])[0]
+        norm1 = scipy.integrate.quad(lambda x: measure(x), 0., roots[0])[0]
+        cm2 = scipy.integrate.quad(lambda x: x * measure(x), roots[1], roots[2])[0]
+        norm2 = scipy.integrate.quad(lambda x: measure(x), roots[1], roots[2])[0]
+        return cm1/norm1, cm2/norm2
+    else:
+        return None
+
 
 def peak_sep_t(t_values, alpha, r, m, tol):
+    x_max = dist_max(alpha, r, m, 0)
     roots_v = np.empty(len(t_values), dtype = float)
     for idx_t, t in enumerate(tqdm(t_values)):
-        roots_v[idx_t] = peak_sep(alpha = alpha, r = r, m = m, t = t, tol = tol)
+        roots_v[idx_t] = peak_sep(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
     return roots_v
+
+def peak_cms_diff_t(t_values, alpha, r, m, tol):
+    x_max = dist_max(alpha, r, m, 0)
+    roots_v = np.empty(len(t_values), dtype = float)
+    for idx_t, t in enumerate(tqdm(t_values)):
+        cm1, cm2 = peak_cms(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
+        roots_v[idx_t] = cm2 - cm1
+    return roots_v
+
+def transf(x, t):
+    return (1+t)*x/(1+t*x)
