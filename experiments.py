@@ -172,7 +172,7 @@ def gen_mr(entropy, neurons, rank, t, m_values, r_values, p, initial, max_it, di
                 system = dream(neurons=neurons, k=int(rank * neurons / m), r=r, m=m, t=t,
                                rng_ss=this_ss, diagonal=diagonal)
                 system.set_interaction()
-
+                print(np.diag(system.J))
                 system.initial_state = system.gen_samples(system.state(initial, reduced=reduced), p=p)
                 final_state, error_list = system.simulate_zero_T(max_it=max_it)
 

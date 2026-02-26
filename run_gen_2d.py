@@ -6,7 +6,7 @@ from tqdm import tqdm
 import theory
 
 neurons = 1000
-rank = 2
+rank = 0.1
 p = 0.9
 # samples = 10
 max_it = 200
