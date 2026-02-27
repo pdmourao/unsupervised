@@ -6,7 +6,7 @@ from tqdm import tqdm
 import theory
 
 neurons = 1000
-rank = 0.1
+rank = 2
 p = 0.9
 # samples = 10
 max_it = 200
@@ -44,7 +44,7 @@ ms_red, seps_red = zip(*[(x, y) for x, y in zip(ms[1:], seps) if y is not None])
 
 
 for t in t_values:
-    experiment = lab.Experiment(directory = 'Data_remote', func = exp.gen_mr, m_values = m_values, r_values = r_values,
+    experiment = lab.Experiment(directory = 'Data', func = exp.gen_mr, m_values = m_values, r_values = r_values,
                                 neurons = neurons, rank = rank, t = t, p = p, reduced = reduced, diagonal = diagonal,
                                 initial = initial, max_it = max_it)
     m_arc, m_ex, its, errors = experiment.read()
@@ -59,7 +59,7 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
     fig, axs = plt.subplots(2, 2, sharex = True, sharey = True)
 
     for idx_t, ax in enumerate(axs.flat):
-        c = ax.imshow(np.transpose(np.flip(apply_over_samples(array[idx_t], axis = 0), axis=-1)), cmap=color_scheme, vmin=0, vmax=vmax, aspect='auto',
+        c = ax.imshow(np.transpose(np.flip(apply_over_samples(np.abs(array[idx_t]), axis = 0), axis=-1)), cmap=color_scheme, vmin=0, vmax=vmax, aspect='auto',
                       interpolation='nearest',
                       extent=(x_min, x_max, y_min, y_max))
 
@@ -137,3 +137,6 @@ cbar_arc = fig.colorbar(im_arc, ax=axs.ravel().tolist())
 cbar_arc.set_ticks([])
 fig.suptitle(rf'Generalization for $\alpha M = {rank}$')
 plt.show()
+
+print(m_arc_list[3][:,25,25])
+print(m_ex_list[3][:,25,25])

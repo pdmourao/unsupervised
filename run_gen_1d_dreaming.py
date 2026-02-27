@@ -15,6 +15,7 @@ reduced = 'full'
 diagonal = False
 initial = 'ex'
 
+epsilon = 1
 
 t_values = np.linspace(0, 50, num = 101)
 
@@ -36,7 +37,7 @@ predict_gap = lab.core.prediction(directory = 'Data', func = theory.peak_sep_t, 
 predict_cm = lab.core.prediction(directory = 'Data', func = theory.peak_cms_diff_t, alpha = alpha, r = r, m = m,
                               t_values = t_values, tol = 1e-4)
 predict_gaps = [theory.transf(roots[2], t) - theory.transf(roots[1], t) for t in t_values]
-predict_cms = [theory.transf(cm2, t) - theory.transf(cm1, t) for t in t_values]
+predict_cms = [theory.transf(cm2, t) - epsilon * theory.transf(cm1, t) for t in t_values]
 #axs[1].plot(t_values, predict_gap)
 axs[1].plot(t_values, predict_gaps)
 #axs[2].plot(t_values, predict_cm)
@@ -63,4 +64,4 @@ seps = [theory.sep_r(alpha = rank / m, m = m) for m in ms]
 plt.plot(ms, seps)
 plt.ylim(0, 1)
 plt.scatter([m], [r])
-plt.show()
+#plt.show()
