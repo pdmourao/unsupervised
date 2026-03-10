@@ -7,12 +7,12 @@ import theory
 
 neurons = 1000
 rank = 2
-p = 0.9
+p = 1
 # samples = 10
 max_it = 200
 reduced = 'full'
 diagonal = False
-initial = 'ex'
+initial = 'new_ex'
 alpha_c = 0.138
 
 draw_capacity = rank > alpha_c
@@ -44,7 +44,7 @@ ms_red, seps_red = zip(*[(x, y) for x, y in zip(ms[1:], seps) if y is not None])
 
 
 for t in t_values:
-    experiment = lab.Experiment(directory = 'Data', func = exp.gen_mr, m_values = m_values, r_values = r_values,
+    experiment = lab.Experiment(directory = 'Data_remote', func = exp.gen_mr, m_values = m_values, r_values = r_values,
                                 neurons = neurons, rank = rank, t = t, p = p, reduced = reduced, diagonal = diagonal,
                                 initial = initial, max_it = max_it)
     m_arc, m_ex, its, errors = experiment.read()
@@ -56,16 +56,17 @@ for t in t_values:
 # print(f'Maximum recorded iterations and errors were {np.max(its)} and {np.max(errors)}, respectively')
 
 def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 1, draw_cap = draw_capacity):
-    fig, axs = plt.subplots(2, 2, sharex = True, sharey = True)
+    if len(t_values) == 1:
+        idx_t = 0
+        fig, ax = plt.subplots(1)
 
-    for idx_t, ax in enumerate(axs.flat):
-        c = ax.imshow(np.transpose(np.flip(apply_over_samples(np.abs(array[idx_t]), axis = 0), axis=-1)), cmap=color_scheme, vmin=0, vmax=vmax, aspect='auto',
+        c = ax.imshow(np.transpose(np.flip(apply_over_samples(np.abs(array[idx_t]), axis=0), axis=-1)),
+                      cmap=color_scheme, vmin=0, vmax=vmax, aspect='auto',
                       interpolation='nearest',
                       extent=(x_min, x_max, y_min, y_max))
 
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(y_min, y_max)
-
 
         ax.plot(ms_red, seps_red, color='black', linestyle='dashed')
 
@@ -77,11 +78,38 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
         ax.label_outer()
         ax.set_title(rf'$t = {t_values[idx_t]}$')
 
-    #fig.supxlabel(r'$M$')
-    #fig.supylabel(r'$r$')
-    fig.colorbar(c, ax=axs.ravel().tolist())
-    fig.suptitle(rf'{header} for $\alpha M = {rank}$')
-    plt.show()
+        # fig.supxlabel(r'$M$')
+        # fig.supylabel(r'$r$')
+        fig.colorbar(c, ax=ax)
+        fig.suptitle(rf'{header} for $\alpha M = {rank}$')
+        plt.show()
+    else:
+        fig, axs = plt.subplots(2, 2, sharex = True, sharey = True)
+
+        for idx_t, ax in enumerate(axs.flat):
+            c = ax.imshow(np.transpose(np.flip(apply_over_samples(np.abs(array[idx_t]), axis = 0), axis=-1)), cmap=color_scheme, vmin=0, vmax=vmax, aspect='auto',
+                          interpolation='nearest',
+                          extent=(x_min, x_max, y_min, y_max))
+
+            ax.set_xlim(x_min, x_max)
+            ax.set_ylim(y_min, y_max)
+
+
+            ax.plot(ms_red, seps_red, color='black', linestyle='dashed')
+
+            if draw_capacity:
+                ax.vlines(x=rank / alpha_c, ymin=y_min, ymax=y_max, colors='red')
+
+            ax.set_xlabel(r'$M$')
+            ax.set_ylabel(r'$r$')
+            ax.label_outer()
+            ax.set_title(rf'$t = {t_values[idx_t]}$')
+
+        #fig.supxlabel(r'$M$')
+        #fig.supylabel(r'$r$')
+        fig.colorbar(c, ax=axs.ravel().tolist())
+        fig.suptitle(rf'{header} for $\alpha M = {rank}$')
+        plt.show()
 
 draw_plot(m_arc_list, header = 'Archetype recall', color_scheme = 'Blues')
 draw_plot(m_arc_list, header = 'Maximum archetype recall', color_scheme = 'Blues', apply_over_samples = np.max)

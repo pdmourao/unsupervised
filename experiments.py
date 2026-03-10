@@ -167,15 +167,21 @@ def gen_mr(entropy, neurons, rank, t, m_values, r_values, p, initial, max_it, di
     with tqdm(total = len_x * len_y) as pbar:
         for idx_m, m in enumerate(m_values):
             for idx_r, r in enumerate(r_values):
-
+                # we take the rng for this iteration and provide it to the system with the rest of the inputs
                 this_ss = rng_list[idx_m * len(r_values) + idx_r]
                 system = dream(neurons=neurons, k=int(rank * neurons / m), r=r, m=m, t=t,
                                rng_ss=this_ss, diagonal=diagonal)
+                # generate the iteraction matrix
                 system.set_interaction()
-                print(np.diag(system.J))
-                system.initial_state = system.gen_samples(system.state(initial, reduced=reduced), p=p)
+                # give the option of starting from a new_example
+                if initial == 'new_ex':
+                    system.initial_state = system.gen_samples(system.gen_samples(system.state('arc', reduced=reduced), p=r), p=p)
+                # otherwise it is either archetypes or stored examples
+                else:
+                    system.initial_state = system.gen_samples(system.state(initial, reduced=reduced), p=p)
+                # here we simulate
                 final_state, error_list = system.simulate_zero_T(max_it=max_it)
-
+                # measuring magnetizations
                 mags_arc[idx_m, idx_r] = np.mean(system.state('arc', reduced=reduced) * final_state, axis=-1)
                 mags_ex[idx_m, idx_r] = np.mean(system.state('ex', reduced=reduced) * final_state, axis=-1)
 
@@ -203,7 +209,14 @@ def gen_t(entropy, neurons, alpha, t_values, m, r, p, initial, max_it, diagonal,
                        rng_ss=this_ss, diagonal=diagonal)
         system.set_interaction()
 
-        system.initial_state = system.gen_samples(system.state(initial, reduced=reduced), p=p)
+        # give the option of starting from a new_example
+        if initial == 'new_ex':
+            system.initial_state = system.gen_samples(system.gen_samples(system.state('arc', reduced=reduced), p=r),
+                                                      p=p)
+        # otherwise it is either archetypes or stored examples
+        else:
+            system.initial_state = system.gen_samples(system.state(initial, reduced=reduced), p=p)
+        # here we simulate
         final_state, error_list = system.simulate_zero_T(max_it=max_it)
 
         mags_arc[idx_t] = np.mean(system.state('arc', reduced=reduced) * final_state, axis=-1)
@@ -211,6 +224,37 @@ def gen_t(entropy, neurons, alpha, t_values, m, r, p, initial, max_it, diagonal,
 
         its[idx_t] = len(error_list)
         errors[idx_t] = error_list[-1]
+
+
+    return mags_arc, mags_ex, its, errors
+
+
+def gen_p(entropy, neurons, alpha, t, m, r, p_values, max_it, diagonal, reduced):
+
+    len_x = len(p_values)
+
+    rng_list = np.random.SeedSequence(entropy).spawn(len_x)
+    mags_arc = np.empty(len_x, dtype = float)
+    mags_ex = np.empty(len_x, dtype=float)
+    its = np.empty(len_x, dtype=int)
+    errors = np.empty(len_x, dtype=float)
+
+    for idx_p, p in enumerate(tqdm(p_values)):
+        this_ss = rng_list[idx_p]
+        system = dream(neurons=neurons, k=int(alpha * neurons), r=r, m=m, t=t,
+                       rng_ss=this_ss, diagonal=diagonal)
+        system.set_interaction()
+
+        # initial state
+        system.initial_state = system.gen_samples(system.state('arc', reduced=reduced), p=p)
+        # here we simulate
+        final_state, error_list = system.simulate_zero_T(max_it=max_it)
+
+        mags_arc[idx_p] = np.mean(system.state('arc', reduced=reduced) * final_state, axis=-1)
+        mags_ex[idx_p] = np.mean(system.state('ex', reduced=reduced) * final_state, axis=-1)
+
+        its[idx_p] = len(error_list)
+        errors[idx_p] = error_list[-1]
 
 
     return mags_arc, mags_ex, its, errors

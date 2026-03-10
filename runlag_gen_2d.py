@@ -8,14 +8,14 @@ r_values = np.linspace(1, 0, num = 50, endpoint = False)[::-1]
 m_values = np.linspace(1, 50, num = 50, dtype = int)
 
 kwargs = {'neurons': 1000,
-          'rank': 1.5,
+          'rank': 0.1,
           'max_it': 200,
           'reduced': 'full',
           'diagonal': False,
-          'initial': 'ex',
+          'initial': 'new_ex',
           'm_values': m_values,
           'r_values': r_values,
-          'p': 0.9}
+          'p': 1}
 
 t_values = [0, 1, 10, 1000]
 

@@ -3,15 +3,15 @@ import laboratory as lab
 import experiments as exp
 
 neurons = 1000
-alpha = 0.05
-m = 40
-r = 0.4
-p = 0.9
+alpha = 0.2
+m = 50
+r = 0.5
+p = 1
 samples = 10
 max_it = 200
 reduced = 'full'
 diagonal = False
-initial = 'ex'
+initial = 'new_ex'
 
 t_values = np.linspace(0, 50, num = 101)
 
