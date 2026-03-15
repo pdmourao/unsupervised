@@ -4,28 +4,32 @@ from matplotlib import pyplot as plt
 import theory
 from tqdm import tqdm
 import sys
+import experiments as exp
 
 kwargs = {'t' : 0,
-          'm': 10,
-          'r': 0.6,
+          'm': 50,
+          'r': 0.5,
           'alpha': 0.1,
           'diagonal': False
           }
+neurons = 500
+samples = 50
 
-kwargs['alpha'] = theory.sep_alpha(kwargs['r'], kwargs['m'])
-print(kwargs['alpha'])
+spec = exp.spec_nosave(neurons = neurons, samples = samples, **kwargs)
+plt.hist(np.ravel(spec), bins='fd', density=True)
+x_min, x_max = plt.xlim()
+
 # function for theoretical spectrum
 spec_func = theory.spec_dist(**kwargs)
-
-xs = np.linspace(-kwargs['alpha'], 1, num = 10000)
+xs = np.linspace(x_min, x_max, num = 10000)
 # compute theoretical spectrum
 ys = [spec_func(x) for x in tqdm(xs)]
+
 plt.plot(xs, ys)
-plt.ylim(0,1)
 plt.show()
 
-sys.exit()
 
+sys.exit()
 ps = np.linspace(1, 0, num = 100, endpoint = False)
 
 ms_ex = np.array([theory.mags(p = p, attractor = 'ex', **kwargs) for p in tqdm(ps)])

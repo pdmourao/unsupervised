@@ -35,16 +35,16 @@ def spec_dist(alpha, r, m, t, diagonal = True):
 
     else:
 
-        mu1 = m / (1 - r ** 2)
-        mu2 = 1 / (r ** 2 + (1 - r ** 2) / m)
+        mu1 = (1 - r ** 2) / m
+        mu2 = r ** 2 + (1 - r ** 2) / m
 
         def dist(x):
             x += shift
             x = x / (1 + t - t * x)
-            a = x
-            b = (m * alpha - 1) - x * (mu1 + mu2)
-            c = (1 - alpha) * mu1 + (1 - alpha * (m - 1)) * mu2 + x * mu1 * mu2
-            d = -mu1 * mu2
+            a = x * mu1 * mu2
+            b = (m * alpha - 1) * mu1 * mu2 - x * (mu1 + mu2)
+            c = (1 - alpha * (m - 1)) * mu1 + (1 - alpha) * mu2 + x
+            d = - 1
 
             p = (3 * a * c - b ** 2) / (3 * a ** 2)
             q = (2 * b ** 3 - 9 * a * b * c + 27 * a ** 2 * d) / (27 * a ** 3)
@@ -172,8 +172,8 @@ def sep_alpha(r, m):
 def sep_r(alpha, m, tol = 1e-4, alpha_c = 0):
     return findroot(lambda r: sep_alpha(r, m) - alpha + alpha_c, 0, 1, tol = tol)
 
-def dist_max(alpha, r, m, t, tol = 1e-2, x_max = 100):
-    f = spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = True)
+def dist_max(alpha, r, m, t, tol = 1e-2, x_max = 100, diagonal = True):
+    f = spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = diagonal)
     for x in np.arange(1, x_max, tol)[::-1]:
         if f(x) == 0:
             x_max = x
@@ -252,3 +252,28 @@ def peak_cms_diff_t(t_values, alpha, r, m, tol):
 
 def transf(x, t):
     return (1+t)*x/(1+t*x)
+
+def peak_left_max_t(t_values, alpha, r, m, tol):
+    x_max = dist_max(alpha, r, m, 0)
+    args = np.empty(len(t_values), dtype=float)
+    vals = np.empty(len(t_values), dtype=float)
+    for idx_t, t in enumerate(tqdm(t_values)):
+        roots = dist_roots(alpha=alpha, r=r, m=m, t=t, tol=tol, x_max=x_max)
+        assert len(roots) == 4, 'Not enough roots?'
+        f = spec_dist(alpha = alpha, r = r, m = m, t = t)
+        maxim = scipy.optimize.minimize_scalar(lambda x: -f(x), bounds = (roots[0], roots[1]))
+        args[idx_t] = maxim.x
+        vals[idx_t] = - maxim.fun
+
+    return args, vals
+
+def peak_left_cm_t(t_values, alpha, r, m, tol):
+    x_max = dist_max(alpha, r, m, 0)
+    cms = np.empty(len(t_values), dtype=float)
+    for idx_t, t in enumerate(tqdm(t_values)):
+        roots = dist_roots(alpha=alpha, r=r, m=m, t=t, tol=tol, x_max=x_max)
+        assert len(roots) == 4, 'Not enough roots?'
+        f = spec_dist(alpha = alpha, r = r, m = m, t = t)
+        cms[idx_t] = scipy.integrate.quad(lambda x: x * f(x), roots[0], roots[1])[0] / scipy.integrate.quad(lambda x: f(x), roots[0], roots[1])[0]
+
+    return cms

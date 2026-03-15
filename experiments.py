@@ -74,12 +74,12 @@ def mags_onestep(entropy, neurons, alpha, r, m, t, initial, attractor, p, diagon
 def spec_nosave(samples, neurons, alpha, r, m, t, entropy = None, diagonal = False):
 
     t0 = time()
-    spec = np.empty((samples, neurons))
+    spec = np.empty((samples, neurons), dtype = float)
 
     rng_ss_list = np.random.SeedSequence(entropy).spawn(samples)
 
     for sample in tqdm(range(samples)):
-        system = dream(neurons=neurons, k=int(alpha * neurons), r=r, m=m, rng_ss = rng_ss_list[sample],
+        system = dream(neurons=neurons, k=int(alpha * neurons), r=r, m=m, rng_ss = rng_ss_list[sample], t = t,
                        diagonal=diagonal)
         system.set_interaction()
 
