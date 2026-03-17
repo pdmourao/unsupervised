@@ -180,9 +180,8 @@ def dist_max(alpha, r, m, t, tol = 1e-2, x_max = 100, diagonal = True):
     print(f'x_max determined to be {x_max}')
     return x_max
 
-def dist_roots(alpha, r, m, t, x_max = None, tol = 1e-4):
-    if x_max is None:
-        x_max = dist_max(alpha, r, m, 0)
+def dist_roots(alpha, r, m, t, tol = 1e-4):
+    x_max = dist_max(alpha, r, m, 0)
     f = spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = True)
     xs = np.arange(x_max, 0, -tol)[::-1]
     roots_down = 0
@@ -200,23 +199,11 @@ def dist_roots(alpha, r, m, t, x_max = None, tol = 1e-4):
         raise Exception(rf'{roots_up} ascending and {roots_down} descending roots ({roots}) found for $\alpha$ = {alpha}, $r$ = {r}, $M$ = {m}, $t$ = {t}')
     return roots
 
-
-def peak_sep(alpha, r, m, t, x_max = None, tol = 1e-4):
-    if x_max is None:
-        x_max = dist_max(alpha, r, m, 0)
-    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
-    if len(roots) == 4:
-        return roots[2] - roots[1]
-    elif len(roots) == 3:
-        return roots[1] - roots[0]
-    else:
-        return 0
-
-def peak_cms(alpha, r, m, t, x_max=None, tol = 1e-4):
+def peak2_var(alpha, r, m, t, x_max=None, tol = 1e-4):
     if x_max is None:
         x_max = dist_max(alpha, r, m, 0)
     measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
-    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
+    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol)
     if len(roots) == 4:
         cm1 = scipy.integrate.quad(lambda x: x * measure(x), roots[0], roots[1])[0]
         norm1 = scipy.integrate.quad(lambda x: measure(x), roots[0], roots[1])[0]
@@ -237,26 +224,36 @@ def peak_sep_t(t_values, alpha, r, m, tol):
     x_max = dist_max(alpha, r, m, 0)
     roots_v = np.empty(len(t_values), dtype = float)
     for idx_t, t in enumerate(tqdm(t_values)):
-        roots_v[idx_t] = peak_sep(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
+        roots_v[idx_t] = peak_sep(alpha = alpha, r = r, m = m, t = t, tol = tol)
+    return roots_v
+
+def peak2_var_t(t_values, alpha, r, m, tol):
+    x_max = dist_max(alpha, r, m, 0)
+    roots_v = np.empty(len(t_values), dtype = float)
+    for idx_t, t in enumerate(tqdm(t_values)):
+        roots_v[idx_t] = peak_sep(alpha = alpha, r = r, m = m, t = t, tol = tol)
     return roots_v
 
 def peak_cms_diff_t(t_values, alpha, r, m, tol):
     x_max = dist_max(alpha, r, m, 0)
     roots_v = np.empty(len(t_values), dtype = float)
     for idx_t, t in enumerate(tqdm(t_values)):
-        cm1, cm2 = peak_cms(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
-        roots_v[idx_t] = cm2 - cm1
+        roots_v[idx_t] = peak_right_cm(alpha, r, m, t, tol) - peak_left_cm(alpha, r, m, t, tol)
     return roots_v
 
-def transf(x, t):
-    return (1+t)*x/(1+t*x)
+def transf(x, t, alpha = None):
+    if alpha is None:
+        shift = 0
+    else:
+        shift = alpha*(1+t)/(1+t*alpha)
+    return (1+t)*x/(1+t*x) - shift
 
 def peak_left_max_t(t_values, alpha, r, m, tol):
     x_max = dist_max(alpha, r, m, 0)
     args = np.empty(len(t_values), dtype=float)
     vals = np.empty(len(t_values), dtype=float)
     for idx_t, t in enumerate(tqdm(t_values)):
-        roots = dist_roots(alpha=alpha, r=r, m=m, t=t, tol=tol, x_max=x_max)
+        roots = dist_roots(alpha=alpha, r=r, m=m, t=t, tol=tol)
         assert len(roots) == 4, 'Not enough roots?'
         f = spec_dist(alpha = alpha, r = r, m = m, t = t)
         maxim = scipy.optimize.minimize_scalar(lambda x: -f(x), bounds = (roots[0], roots[1]))
@@ -265,13 +262,73 @@ def peak_left_max_t(t_values, alpha, r, m, tol):
 
     return args, vals
 
-def peak_left_cm_t(t_values, alpha, r, m, tol):
-    x_max = dist_max(alpha, r, m, 0)
-    cms = np.empty(len(t_values), dtype=float)
-    for idx_t, t in enumerate(tqdm(t_values)):
-        roots = dist_roots(alpha=alpha, r=r, m=m, t=t, tol=tol, x_max=x_max)
-        assert len(roots) == 4, 'Not enough roots?'
-        f = spec_dist(alpha = alpha, r = r, m = m, t = t)
-        cms[idx_t] = scipy.integrate.quad(lambda x: x * f(x), roots[0], roots[1])[0] / scipy.integrate.quad(lambda x: f(x), roots[0], roots[1])[0]
+def vec_tmr(func, t_values, m_values, r_buffer, rank, *args, **kwargs):
 
-    return cms
+    len_x = len(t_values)
+    len_y = len(m_values)
+    output = np.empty((len_x, len_y), dtype = float)
+
+    # get the points from just above the transition line
+    r_values = [sep_r(alpha=rank / m, m=m) + r_buffer for m in m_values]
+
+    with tqdm(total = len_x * len_y) as pbar:
+        for idx_t, t in enumerate(t_values):
+            for idx_m, m in enumerate(m_values):
+                r = r_values[idx_m]
+
+                output[idx_t, idx_m] = func(t = t, m = m, r = r, alpha = rank / m, *args, **kwargs)
+                pbar.update(1)
+
+    return output
+
+def peak_sep(alpha, r, m, t, tol = 1e-4):
+    x_max = dist_max(alpha, r, m, 0)
+    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, x_max = x_max, tol = tol)
+    if len(roots) == 4:
+        return roots[2] - roots[1]
+    elif len(roots) == 3:
+        return roots[1] - roots[0]
+    else:
+        return 0
+
+def peak_cms_diff(t, alpha, r, m, tol = 1e-4):
+    return peak_right_cm(alpha, r, m, t, tol) - peak_left_cm(alpha, r, m, t, tol)
+
+def peak_left_cm(alpha, r, m, t, tol = 1e-4):
+    measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
+    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol)
+    if len(roots) == 4:
+        return scipy.integrate.quad(lambda x: x * measure(x), roots[0], roots[1])[0]/scipy.integrate.quad(lambda x: measure(x), roots[0], roots[1])[0]
+    elif len(roots) == 3:
+        return scipy.integrate.quad(lambda x: x * measure(x), 0., roots[0])[0]/scipy.integrate.quad(lambda x: measure(x), 0., roots[0])[0]
+    else:
+        return None
+
+def peak_right_cm(alpha, r, m, t, tol = 1e-4):
+    measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
+    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol)
+    if len(roots) == 4:
+        return scipy.integrate.quad(lambda x: x * measure(x), roots[2], roots[3])[0]/scipy.integrate.quad(lambda x: measure(x), roots[2], roots[3])[0]
+    elif len(roots) == 3:
+        return scipy.integrate.quad(lambda x: x * measure(x), roots[1], roots[2])[0]/scipy.integrate.quad(lambda x: measure(x), roots[1], roots[2])[0]
+    else:
+        return None
+
+def peak_left_max(t, alpha, r, m, tol):
+    roots = dist_roots(alpha=alpha, r=r, m=m, t=t, tol=tol)
+    if len(roots) == 4:
+        x_min = roots[0]
+        x_max = roots[1]
+    elif len(roots) == 3:
+        x_min = 0.
+        x_max = roots[0]
+    else:
+        return None
+
+    f = spec_dist(alpha=alpha, r=r, m=m, t=t)
+
+    return scipy.optimize.minimize_scalar(lambda x: -f(x), bounds=(x_min, x_max)).x
+
+
+def peak_left_tendency(t, alpha, r, m, tol):
+    return peak_left_max(t, alpha, r, m, tol) - peak_left_cm(t, alpha, r, m, tol)

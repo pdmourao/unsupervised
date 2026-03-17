@@ -16,7 +16,7 @@ reduced = 'full'
 diagonal = False
 initial = 'ex'
 
-epsilon = 1
+epsilon = 0
 
 t_values = np.linspace(0, 50, num = 101)
 
@@ -33,13 +33,13 @@ print(cm1, cm2)
 fig, axs = plt.subplots(1, 1)
 #axs[0].errorbar(t_values, np.mean(m_arc, axis = 0), np.std(m_arc, axis = 0))
 
-predict_gap = lab.core.prediction(directory = 'Data', func = theory.peak_sep_t, alpha = alpha, r = r, m = m,
+predict_gap = lab.core.prediction(directory = 'Predictions', func = theory.peak_sep_t, alpha = alpha, r = r, m = m,
                               t_values = t_values, tol = 1e-4)
-predict_cm = lab.core.prediction(directory = 'Data', func = theory.peak_cms_diff_t, alpha = alpha, r = r, m = m,
+predict_cm = lab.core.prediction(directory = 'Predictions', func = theory.peak_cms_diff_t, alpha = alpha, r = r, m = m,
                               t_values = t_values, tol = 1e-4)
-left_max = lab.core.prediction(directory = 'Data', func = theory.peak_left_max_t, alpha = alpha, r = r, m = m,
+left_max = lab.core.prediction(directory = 'Predictions', func = theory.peak_left_max_t, alpha = alpha, r = r, m = m,
                               t_values = t_values, tol = 1e-4)[0]
-left_cm = lab.core.prediction(directory = 'Data', func = theory.peak_left_cm_t, alpha = alpha, r = r, m = m,
+left_cm = lab.core.prediction(directory = 'Predictions', func = theory.peak_left_cm_t, alpha = alpha, r = r, m = m,
                               t_values = t_values, tol = 1e-4)
 predict_gaps = [theory.transf(roots[2], t) - theory.transf(roots[1], t) for t in t_values]
 predict_cms = [theory.transf(cm2, t) - epsilon * theory.transf(cm1, t) for t in t_values]

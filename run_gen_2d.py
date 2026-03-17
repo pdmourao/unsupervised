@@ -11,7 +11,7 @@ p = 1
 # samples = 10
 max_it = 200
 reduced = 'full'
-diagonal = False
+diagonal = True
 initial = 'new_ex'
 alpha_c = 0.138
 

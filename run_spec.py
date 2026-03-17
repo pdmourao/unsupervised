@@ -6,7 +6,7 @@ from tqdm import tqdm
 import sys
 import experiments as exp
 
-kwargs = {'t' : 10,
+kwargs = {'t' : 1,
           'm': 50,
           'r': 0.5,
           'alpha': 0.1,
@@ -26,7 +26,7 @@ spec_func = theory.spec_dist(**kwargs)
 xs = np.linspace(x_min, x_max, num = 10000)
 # compute theoretical spectrum
 ys = [spec_func(x) for x in tqdm(xs)]
-
+plt.title(rf'$t = {kwargs['t']}$')
 plt.plot(xs, ys)
 plt.show()
 
