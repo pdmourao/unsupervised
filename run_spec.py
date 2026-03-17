@@ -6,14 +6,16 @@ from tqdm import tqdm
 import sys
 import experiments as exp
 
-kwargs = {'t' : 1,
-          'm': 50,
-          'r': 0.5,
-          'alpha': 0.1,
-          'diagonal': False
+kwargs = {'t' : 0,
+          'm': 12,
+          'r': 0.83805,
+          'alpha': 5/12,
+          'diagonal': True
           }
+
+
 neurons = 500
-samples = 50
+samples = 1
 
 spec = exp.spec_nosave(neurons = neurons, samples = samples, **kwargs)
 plt.hist(np.ravel(spec), bins='fd', density=True)

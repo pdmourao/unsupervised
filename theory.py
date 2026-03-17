@@ -196,12 +196,10 @@ def dist_roots(alpha, r, m, t, tol = 1e-4):
             roots.append((x1 + x0) / 2)
             roots_down += 1
     if len(roots) < 1 or len(roots) > 4 or roots_up > roots_down:
-        raise Exception(rf'{roots_up} ascending and {roots_down} descending roots ({roots}) found for $\alpha$ = {alpha}, $r$ = {r}, $M$ = {m}, $t$ = {t}')
+        raise Exception(rf'{roots_up} ascending and {roots_down} descending roots ({roots}) found for $\alpha = {alpha}$, $r = {r}$, $M = {m}$, $t = {t}$.')
     return roots
 
-def peak2_var(alpha, r, m, t, x_max=None, tol = 1e-4):
-    if x_max is None:
-        x_max = dist_max(alpha, r, m, 0)
+def peak2_var(alpha, r, m, t, tol = 1e-4):
     measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
     roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol)
     if len(roots) == 4:
@@ -235,7 +233,6 @@ def peak2_var_t(t_values, alpha, r, m, tol):
     return roots_v
 
 def peak_cms_diff_t(t_values, alpha, r, m, tol):
-    x_max = dist_max(alpha, r, m, 0)
     roots_v = np.empty(len(t_values), dtype = float)
     for idx_t, t in enumerate(tqdm(t_values)):
         roots_v[idx_t] = peak_right_cm(alpha, r, m, t, tol) - peak_left_cm(alpha, r, m, t, tol)
@@ -283,7 +280,7 @@ def vec_tmr(func, t_values, m_values, r_buffer, rank, *args, **kwargs):
 
 def peak_sep(alpha, r, m, t, tol = 1e-4):
     x_max = dist_max(alpha, r, m, 0)
-    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, x_max = x_max, tol = tol)
+    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol)
     if len(roots) == 4:
         return roots[2] - roots[1]
     elif len(roots) == 3:
@@ -291,7 +288,7 @@ def peak_sep(alpha, r, m, t, tol = 1e-4):
     else:
         return 0
 
-def peak_cms_diff(t, alpha, r, m, tol = 1e-4):
+def peak_cms_diff(alpha, r, m, t, tol = 1e-4):
     return peak_right_cm(alpha, r, m, t, tol) - peak_left_cm(alpha, r, m, t, tol)
 
 def peak_left_cm(alpha, r, m, t, tol = 1e-4):
@@ -314,7 +311,7 @@ def peak_right_cm(alpha, r, m, t, tol = 1e-4):
     else:
         return None
 
-def peak_left_max(t, alpha, r, m, tol):
+def peak_left_max(alpha, r, m, t, tol):
     roots = dist_roots(alpha=alpha, r=r, m=m, t=t, tol=tol)
     if len(roots) == 4:
         x_min = roots[0]
@@ -330,5 +327,5 @@ def peak_left_max(t, alpha, r, m, tol):
     return scipy.optimize.minimize_scalar(lambda x: -f(x), bounds=(x_min, x_max)).x
 
 
-def peak_left_tendency(t, alpha, r, m, tol):
-    return peak_left_max(t, alpha, r, m, tol) - peak_left_cm(t, alpha, r, m, tol)
+def peak_left_tendency(alpha, r, m, t, tol):
+    return peak_left_max(alpha, r, m, t, tol) - peak_left_cm(alpha, r, m, t, tol)

@@ -14,6 +14,7 @@ reduced = 'full'
 diagonal = False
 initial = 'new_ex'
 alpha_c = 0.138
+tol = 1e-4
 
 draw_capacity = rank > alpha_c
 
@@ -32,7 +33,17 @@ x_max += step_x
 y_min -= step_y
 y_max += step_y
 
+t_v = np.linspace(x_min, x_max, num = 100)
+m_v = np.linspace(y_min, y_max, num = 100)
+t_grid, m_grid = np.meshgrid(t_v, m_v, indexing='ij')
 
+print(t_values)
+pred = theory.vec_tmr(func = theory.peak_left_tendency, t_values = t_values, m_values = m_values, rank = rank,
+                      r_buffer = r_buffer, tol = tol)
+
+plt.contourf(t_grid, m_grid, pred)
+plt.colorbar()
+plt.show()
 
 experiment = lab.Experiment(directory = 'Data_remote', func = exp.gen_tm_transition, m_values = m_values, r_buffer = r_buffer,
                                 neurons = neurons, rank = rank, t_values = t_values, p = p, reduced = reduced, diagonal = diagonal,
@@ -41,8 +52,7 @@ m_arc, m_ex, its, errors = experiment.read()
 
 # print(f'Maximum recorded iterations and errors were {np.max(its)} and {np.max(errors)}, respectively')
 
-def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 1, draw_cap = draw_capacity):
-    idx_t = 0
+def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 1):
     fig, ax = plt.subplots(1)
 
     c = ax.imshow(np.transpose(np.flip(apply_over_samples(np.abs(array), axis=0), axis=-1)),
@@ -100,24 +110,16 @@ im_ex = ax.imshow(np.transpose(np.flip(masked_ex, axis=-1)), cmap='YlOrBr', vmin
 ax.set_xlim(x_min, x_max)
 ax.set_ylim(y_min, y_max)
 
-
-ax.plot(ms_red, seps_red, color='black', linestyle='dashed')
-
 if draw_capacity:
     ax.vlines(x=rank / alpha_c, ymin=y_min, ymax=y_max, colors='red')
 
 ax.set_xlabel(r'$M$')
 ax.set_ylabel(r'$r$')
-ax.label_outer()
-ax.set_title(rf'$t = {t_values[idx_t]}$')
 
 #fig.supxlabel(r'$M$')
 #fig.supylabel(r'$r$')
-cbar_ex = fig.colorbar(im_ex, ax=axs.ravel().tolist(), pad = -0.07)
-cbar_arc = fig.colorbar(im_arc, ax=axs.ravel().tolist())
+cbar_ex = fig.colorbar(im_ex, ax=ax, pad = -0.07)
+cbar_arc = fig.colorbar(im_arc, ax=ax)
 cbar_arc.set_ticks([])
 fig.suptitle(rf'Arc vs Examples for $\alpha M = {rank}$')
 plt.show()
-
-print(m_arc_list[3][:,25,25])
-print(m_ex_list[3][:,25,25])
