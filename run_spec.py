@@ -6,7 +6,7 @@ from tqdm import tqdm
 import sys
 import experiments as exp
 
-kwargs = {'t' : 0,
+kwargs = {'t' : 10,
           'm': 50,
           'r': 0.5,
           'alpha': 0.1,
@@ -18,6 +18,8 @@ samples = 50
 spec = exp.spec_nosave(neurons = neurons, samples = samples, **kwargs)
 plt.hist(np.ravel(spec), bins='fd', density=True)
 x_min, x_max = plt.xlim()
+
+print(np.mean(spec))
 
 # function for theoretical spectrum
 spec_func = theory.spec_dist(**kwargs)

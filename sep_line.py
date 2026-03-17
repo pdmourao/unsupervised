@@ -5,18 +5,23 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 import theory
 
-alpha = 0.1
-m = 20
-r = 0.45
+rank = 5
 
-rank = alpha*m
 mmin = 2
-mmax = 50
+mmin_values = 11
+mmax = 60
 ms = np.linspace(mmin, mmax, 1000)
+
+r_gap = 0.05
+m_values = np.linspace(mmin_values, mmax, num = 50, dtype = int)
+print(m_values)
+
+
 seps = [theory.sep_r(alpha = rank/m, m = m) for m in ms]
-print(seps)
+points = [theory.sep_r(alpha = rank/m, m = m) + r_gap for m in m_values]
+print(points[0])
 plt.plot(ms, seps)
 plt.vlines(x=rank / 0.138, ymin=0, ymax=1, colors='red')
 plt.ylim(0, 1)
-plt.scatter([m], [r])
+plt.scatter(m_values, points)
 plt.show()

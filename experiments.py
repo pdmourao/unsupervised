@@ -2,6 +2,7 @@ import numpy as np
 from time import time as time
 from laboratory.systems import Dream as dream
 from tqdm import tqdm
+import theory
 
 
 def delta(neurons, alpha, r, m, initial, attractor, t, p, diagonal, entropy = None):
@@ -187,6 +188,50 @@ def gen_mr(entropy, neurons, rank, t, m_values, r_values, p, initial, max_it, di
 
                 its[idx_m, idx_r] = len(error_list)
                 errors[idx_m, idx_r] = error_list[-1]
+
+                pbar.update(1)
+
+    return mags_arc, mags_ex, its, errors
+
+def gen_tm_transition(entropy, neurons, rank, t_values, m_values, r_buffer, p, initial, max_it, diagonal, reduced):
+
+    len_x = len(t_values)
+    len_y = len(m_values)
+
+    # get the points from just above the transition line
+    r_values = [theory.sep_r(alpha=rank / m, m=m) + r_buffer for m in m_values]
+
+    rng_list = np.random.SeedSequence(entropy).spawn(len_x * len_y)
+    mags_arc = np.empty((len_x, len_y), dtype = float)
+    mags_ex = np.empty((len_x, len_y), dtype=float)
+    its = np.empty((len_x, len_y), dtype=int)
+    errors = np.empty((len_x, len_y), dtype=float)
+
+    with tqdm(total = len_x * len_y) as pbar:
+        for idx_t, t in enumerate(t_values):
+            for idx_m, m in enumerate(m_values):
+                r = r_values[idx_m]
+
+                # we take the rng for this iteration and provide it to the system with the rest of the inputs
+                this_ss = rng_list[idx_t * len(m_values) + idx_m]
+                system = dream(neurons=neurons, k=int(rank * neurons / m), r=r, m=m, t=t,
+                               rng_ss=this_ss, diagonal=diagonal)
+                # generate the iteraction matrix
+                system.set_interaction()
+                # give the option of starting from a new_example
+                if initial == 'new_ex':
+                    system.initial_state = system.gen_samples(system.gen_samples(system.state('arc', reduced=reduced), p=r), p=p)
+                # otherwise it is either archetypes or stored examples
+                else:
+                    system.initial_state = system.gen_samples(system.state(initial, reduced=reduced), p=p)
+                # here we simulate
+                final_state, error_list = system.simulate_zero_T(max_it=max_it)
+                # measuring magnetizations
+                mags_arc[idx_t, idx_m] = np.mean(system.state('arc', reduced=reduced) * final_state, axis=-1)
+                mags_ex[idx_t, idx_m] = np.mean(system.state('ex', reduced=reduced) * final_state, axis=-1)
+
+                its[idx_t, idx_m] = len(error_list)
+                errors[idx_t, idx_m] = error_list[-1]
 
                 pbar.update(1)
 

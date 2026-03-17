@@ -6,16 +6,10 @@ from tqdm import tqdm
 # gives the spectral distribution, predicted with Edwards-Jones
 def spec_dist(alpha, r, m, t, diagonal = True):
 
-    if diagonal:
-        shift = 0
-    else:
-        shift = alpha
-
     if np.isinf(m):
         lp = r ** 2 * (1 + np.sqrt(alpha)) ** 2 + alpha * (1 - r ** 2)
         lm = r ** 2 * (1 - np.sqrt(alpha)) ** 2 + alpha * (1 - r ** 2)
         def dist(x):
-            x += shift
             x = x / (1 + t - t * x)
             if lm < x < lp:
                 return (1 + t * x) ** 2/ (1 + t) * np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * r ** 2 * (x - alpha * (1 - r ** 2)))
@@ -26,7 +20,6 @@ def spec_dist(alpha, r, m, t, diagonal = True):
         lp = (1 + np.sqrt(alpha)) ** 2
         lm = (1 - np.sqrt(alpha)) ** 2
         def dist(x):
-            x += shift
             x = x / (1 + t - t * x)
             if lm < x < lp:
                 return (1 + t * x) ** 2/ (1 + t) * np.sqrt((lp - x) * (x - lm)) / (2 * math.pi * x)
@@ -39,7 +32,6 @@ def spec_dist(alpha, r, m, t, diagonal = True):
         mu2 = r ** 2 + (1 - r ** 2) / m
 
         def dist(x):
-            x += shift
             x = x / (1 + t - t * x)
             a = x * mu1 * mu2
             b = (m * alpha - 1) * mu1 * mu2 - x * (mu1 + mu2)
@@ -56,7 +48,13 @@ def spec_dist(alpha, r, m, t, diagonal = True):
             else:
                 return (1 + t * x) ** 2/ (1 + t) * np.sqrt(3) / math.pi / 2 * (np.cbrt(-q / 2 + np.sqrt(disc)) + np.cbrt(q / 2 + np.sqrt(disc)))
 
-    return dist
+    if diagonal:
+        return dist
+    elif t == 0:
+        return lambda x: dist(x + alpha)
+    else:
+        shift = scipy.integrate.quad(lambda x: x * dist(x), 0, np.inf)[0]
+        return lambda x: dist(x + shift)
 
 # gives the delta peak
 def peak(alpha, m, r, diagonal = True):
