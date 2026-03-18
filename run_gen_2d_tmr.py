@@ -15,7 +15,7 @@ diagonal = False
 initial = 'new_ex'
 alpha_c = 0.138
 tol = 1e-4
-num_points = 100
+num_points = 50
 
 draw_capacity = False
 
@@ -34,12 +34,8 @@ x_max += step_x
 y_min -= step_y
 y_max += step_y
 
-if num_points == 50:
-    t_v = t_values
-    m_v = m_values
-else:
-    t_v = np.linspace(0, 49, num = num_points)
-    m_v = np.linspace(11, 60, num = num_points)
+t_v = np.linspace(0, 49, num = num_points)
+m_v = np.linspace(11, 60, num = num_points)
 
 t_grid, m_grid = np.meshgrid(t_v, m_v, indexing='ij')
 
