@@ -5,10 +5,10 @@ import experiments as exp
 samples = 10
 
 t_values = np.linspace(0, 49, num = 50, endpoint = True)
-m_values = np.linspace(11, 60, num = 50, dtype = int)
+m_values = np.linspace(5, 54, num = 50, dtype = int)
 
 kwargs = {'neurons': 1000,
-          'rank': 5,
+          'rank': 2,
           'max_it': 200,
           'reduced': 'full',
           'diagonal': False,

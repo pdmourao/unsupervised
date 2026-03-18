@@ -5,15 +5,15 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 import theory
 
-rank = 5
+rank = 2
 
 mmin = 2
-mmin_values = 11
-mmax = 60
+mmin_values = 5
+mmax = 54
 ms = np.linspace(mmin, mmax, 1000)
 
 r_gap = 0.05
-m_values = np.linspace(mmin_values, mmax, num = 50, dtype = int)
+m_values = np.arange(mmin_values, mmax, num = 50, dtype = int)
 print(m_values)
 
 
