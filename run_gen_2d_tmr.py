@@ -2,7 +2,7 @@ import numpy as np
 import laboratory as lab
 import experiments as exp
 from matplotlib import pyplot as plt
-from tqdm import tqdm
+import sys
 import theory
 
 neurons = 1000
@@ -15,8 +15,9 @@ diagonal = False
 initial = 'new_ex'
 alpha_c = 0.138
 tol = 1e-4
+num_points = 100
 
-draw_capacity = rank > alpha_c
+draw_capacity = False
 
 t_values = np.linspace(0, 49, num = 50)
 m_values = np.linspace(11, 60, num = 50, dtype = int)
@@ -33,17 +34,29 @@ x_max += step_x
 y_min -= step_y
 y_max += step_y
 
-t_v = np.linspace(x_min, x_max, num = 100)
-m_v = np.linspace(y_min, y_max, num = 100)
+if num_points == 50:
+    t_v = t_values
+    m_v = m_values
+else:
+    t_v = np.linspace(0, 49, num = num_points)
+    m_v = np.linspace(11, 60, num = num_points)
+
 t_grid, m_grid = np.meshgrid(t_v, m_v, indexing='ij')
 
-print(t_values)
-pred = theory.vec_tmr(func = theory.peak_left_tendency, t_values = t_values, m_values = m_values, rank = rank,
-                      r_buffer = r_buffer, tol = tol)
+pred_right_cm = lab.core.prediction(directory ='Predictions', func = theory.peak_right_cm, vec = theory.vec_tmr,
+                                    t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer, tol = tol)
 
-plt.contourf(t_grid, m_grid, pred)
-plt.colorbar()
-plt.show()
+pred_left_cm = lab.core.prediction(directory ='Predictions', func = theory.peak_left_cm, vec = theory.vec_tmr,
+                                   t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer, tol = tol)
+
+pred_left_max = lab.core.prediction(directory = 'Predictions', func = theory.peak_left_max, vec = theory.vec_tmr,
+                           t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer, tol = tol)
+
+pred_right_max = lab.core.prediction(directory = 'Predictions', func = theory.peak_right_max, vec = theory.vec_tmr,
+                           t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer, tol = tol)
+
+pred_roots = lab.core.prediction(directory = 'Predictions', func = theory.dist_roots, vec = theory.vec_tmr,
+                           t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer, tol = tol)
 
 experiment = lab.Experiment(directory = 'Data_remote', func = exp.gen_tm_transition, m_values = m_values, r_buffer = r_buffer,
                                 neurons = neurons, rank = rank, t_values = t_values, p = p, reduced = reduced, diagonal = diagonal,
@@ -68,21 +81,23 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
 
     ax.set_xlabel(r'$t$')
     ax.set_ylabel(r'$M$')
-    ax.label_outer()
     ax.set_title(rf'Dreaming generalization for $\alpha M = {rank}$')
 
     fig.colorbar(c, ax=ax)
-    fig.suptitle(rf'{header} for $\alpha M = {rank}$')
-    plt.show()
 
+#pred_diff_right = np.where(t_grid > 10, pred_right_cm - pred_left_cm, np.nan)
 draw_plot(m_arc, header = 'Archetype recall', color_scheme = 'Blues')
-draw_plot(m_arc, header = 'Maximum archetype recall', color_scheme = 'Blues', apply_over_samples = np.max)
-draw_plot(m_ex, header = 'Example recall', color_scheme = 'YlOrBr')
-draw_plot(m_ex, header = 'Maximum example recall', color_scheme = 'YlOrBr', apply_over_samples = np.max)
-draw_plot(its, header = 'Maximum iterations', color_scheme = 'Reds', vmax = max_it, apply_over_samples=np.max)
-draw_plot(errors, header = 'Maximum final errors', color_scheme = 'Greys', apply_over_samples=np.max)
-draw_plot(errors, header = 'Mean final errors', color_scheme = 'Greys')
-
+plt.contour(t_grid, m_grid, pred_left_max - pred_left_cm, levels = [0], colors ='red', linestyles ='dashed')
+#plt.contour(t_grid, m_grid, pred_right_max, levels = [0.95], colors ='green', linestyles ='dashed')
+plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [0.15], colors ='black', linestyles ='dashed')
+plt.show()
+#draw_plot(m_arc, header = 'Maximum archetype recall', color_scheme = 'Blues', apply_over_samples = np.max)
+#draw_plot(m_ex, header = 'Example recall', color_scheme = 'YlOrBr')
+#draw_plot(m_ex, header = 'Maximum example recall', color_scheme = 'YlOrBr', apply_over_samples = np.max)
+#draw_plot(its, header = 'Maximum iterations', color_scheme = 'Reds', vmax = max_it, apply_over_samples=np.max)
+#draw_plot(errors, header = 'Maximum final errors', color_scheme = 'Greys', apply_over_samples=np.max)
+#draw_plot(errors, header = 'Mean final errors', color_scheme = 'Greys')
+sys.exit()
 fig, ax = plt.subplots(1)
 
 m_a = np.mean(m_arc, axis = 0)

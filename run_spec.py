@@ -9,15 +9,15 @@ import experiments as exp
 kwargs = {'t' : 0,
           'm': 12,
           'r': 0.83805,
-          'alpha': 5/12,
-          'diagonal': True
+          'alpha': 5/12
           }
 
+print(theory.dist_roots(**kwargs))
 
 neurons = 500
 samples = 1
 
-spec = exp.spec_nosave(neurons = neurons, samples = samples, **kwargs)
+spec = exp.spec_nosave(neurons = neurons, samples = samples, diagonal = True, **kwargs)
 plt.hist(np.ravel(spec), bins='fd', density=True)
 x_min, x_max = plt.xlim()
 
@@ -28,7 +28,7 @@ spec_func = theory.spec_dist(**kwargs)
 xs = np.linspace(x_min, x_max, num = 10000)
 # compute theoretical spectrum
 ys = [spec_func(x) for x in tqdm(xs)]
-plt.title(rf'$t = {kwargs['t']}$')
+
 plt.plot(xs, ys)
 plt.show()
 
