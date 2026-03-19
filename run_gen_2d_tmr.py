@@ -15,7 +15,7 @@ diagonal = False
 initial = 'new_ex'
 alpha_c = 0.138
 tol = 1e-4
-num_points = 100
+num_points = 50
 
 draw_capacity = False
 
@@ -85,7 +85,7 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
 draw_plot(m_arc, header = 'Archetype recall', color_scheme = 'Blues')
 plt.contour(t_grid, m_grid, pred_left_max - pred_left_cm, levels = [0], colors ='red', linestyles ='dashed')
 #plt.contour(t_grid, m_grid, pred_right_max, levels = [0.95], colors ='green', linestyles ='dashed')
-plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [0.15], colors ='black', linestyles ='dashed')
+plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [0.3], colors ='black', linestyles ='dashed')
 plt.show()
 #draw_plot(m_arc, header = 'Maximum archetype recall', color_scheme = 'Blues', apply_over_samples = np.max)
 #draw_plot(m_ex, header = 'Example recall', color_scheme = 'YlOrBr')
@@ -124,8 +124,8 @@ ax.set_ylim(y_min, y_max)
 if draw_capacity:
     ax.vlines(x=rank / alpha_c, ymin=y_min, ymax=y_max, colors='red')
 
-ax.set_xlabel(r'$M$')
-ax.set_ylabel(r'$r$')
+ax.set_xlabel(r'$t$')
+ax.set_ylabel(r'$M$')
 
 #fig.supxlabel(r'$M$')
 #fig.supylabel(r'$r$')
