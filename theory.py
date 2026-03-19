@@ -315,6 +315,12 @@ def peak_left_cm(alpha, r, m, t, tol = 1e-4, x_max = None):
     else:
         return None
 
+def dist_cm(alpha, r, m, t, tol = 1e-4, x_max = None):
+    if x_max is None:
+        x_max = dist_max(alpha, r, m, 0)
+    measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
+    return scipy.integrate.quad(lambda x: x * measure(x), 0., x_max)[0]
+
 def peak_right_cm(alpha, r, m, t, tol, x_max = None):
     measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
     roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
