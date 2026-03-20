@@ -6,7 +6,7 @@ import sys
 import theory
 
 neurons = 1000
-rank = 5
+rank = 2
 p = 1
 # samples = 10
 max_it = 200
@@ -15,7 +15,7 @@ diagonal = False
 initial = 'new_ex'
 alpha_c = 0.138
 tol = 1e-4
-num_points = 50
+num_points = 100
 if rank == 2:
     M_min = 5
 elif rank == 5:
