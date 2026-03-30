@@ -6,7 +6,7 @@ import sys
 import theory
 
 neurons = 1000
-rank = 5
+rank = 2
 p = 1
 # samples = 10
 max_it = 200
@@ -18,8 +18,10 @@ tol = 1e-4
 num_points = 50
 if rank == 2:
     M_min = 5
+    lvl = 0.35
 elif rank == 5:
     M_min = 11
+    lvl = 0.2
 
 draw_capacity = False
 
@@ -92,17 +94,25 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
 
     ax.set_xlabel(r'$t$')
     ax.set_ylabel(r'$M$')
-    ax.set_title(rf'Dreaming generalization for $\alpha M = {rank}$')
+    ax.set_title(rf'$\alpha M = {rank}$')
 
     fig.colorbar(c, ax=ax)
 
 #pred_diff_right = np.where(t_grid > 10, pred_right_cm - pred_left_cm, np.nan)
 draw_plot(m_arc, header = 'Archetype recall', color_scheme = 'Blues')
-plt.contour(t_grid, m_grid, pred_left_max, levels = [0], colors ='green', linestyles ='dashed')
-plt.contour(t_grid, m_grid, pred_right_max**2-pred_left_max, levels = [0.2], colors ='red', linestyles ='dashed')
-#plt.contour(t_grid, m_grid, pred_right_max, levels = [0.2], colors ='black', linestyles ='dashed')
-plt.contour(t_grid, m_grid, pred_right_cm-pred_left_cm, levels = [0.25], colors ='black', linestyles ='dashed')
+
+#plt.contour(t_grid, m_grid, pred_left_max, levels = [0], colors ='green', linestyles ='dashed')
+peak1 = plt.contour(t_grid, m_grid, pred_left_max-pred_left_cm, levels = [0], colors ='red', linestyles ='dashed')
+cms = plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [lvl], colors ='black', linestyles ='dashed')
+#plt.contour(t_grid, m_grid, pred_right_cm-pred_left_cm, levels = [0.2], colors ='black', linestyles ='dashed')
 #plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [0.2], colors ='black', linestyles ='dashed')
+plt.show()
+
+#plt.contourf(t_grid, m_grid, pred_left_max-pred_left_cm)
+#plt.show()
+plt.contourf(t_grid, m_grid, pred_right_cm - pred_left_cm)
+plt.title(rf'$\alpha M = {rank}$')
+plt.colorbar()
 plt.show()
 #draw_plot(m_arc, header = 'Maximum archetype recall', color_scheme = 'Blues', apply_over_samples = np.max)
 #draw_plot(m_ex, header = 'Example recall', color_scheme = 'YlOrBr')
@@ -110,7 +120,7 @@ plt.show()
 #draw_plot(its, header = 'Maximum iterations', color_scheme = 'Reds', vmax = max_it, apply_over_samples=np.max)
 #draw_plot(errors, header = 'Maximum final errors', color_scheme = 'Greys', apply_over_samples=np.max)
 #draw_plot(errors, header = 'Mean final errors', color_scheme = 'Greys')
-print((pred_right_max-pred_left_max)[:,0])
+print((pred_right_cm-pred_left_cm)[0,:])
 sys.exit()
 fig, ax = plt.subplots(1)
 

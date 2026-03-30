@@ -143,9 +143,9 @@ def mags_int(*args, **kwargs):
     return 1 - 2 * cumulative
 
 # bissection method
-def findroot(f, x1, x2, tol = 1e-3):
+def findroot(f, x1, x2, tol = 1e-3, limit = None):
     if f(x1) * f(x2) > 0:
-        return None
+        return limit
     x = x1 + (x2 - x1)/2
     while abs(x2-x1) > tol:
         if f(x) * f(x1) > 0:
@@ -168,7 +168,7 @@ def sep_alpha(r, m):
     return (mu2-mu1)**2/(m*(np.cbrt(p1*mu1**2)+np.cbrt(p2*mu2**2))**3)
 
 def sep_r(alpha, m, tol = 1e-4, alpha_c = 0):
-    return findroot(lambda r: sep_alpha(r, m) - alpha + alpha_c, 0, 1, tol = tol)
+    return findroot(lambda r: sep_alpha(r, m) - alpha + alpha_c, 0, 1, tol = tol, limit = 1)
 
 def dist_max(alpha, r, m, t, tol = 1e-2, x_max = 100, diagonal = True, prints = True):
     f = spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = diagonal)
