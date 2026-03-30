@@ -15,7 +15,7 @@ diagonal = False
 initial = 'new_ex'
 alpha_c = 0.138
 tol = 1e-4
-num_points = 50
+num_points = 100
 if rank == 2:
     M_min = 5
     lvl = 0.35
