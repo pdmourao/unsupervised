@@ -6,8 +6,8 @@ from matplotlib import patches
 import scipy
 import theory
 
-rank = 5
-num_points = 50
+rank = 2
+num_points = 100
 
 m_values = np.linspace(1, 50, num = num_points)
 r_values = np.linspace(theory.sep_r(alpha = rank / m_values[-1], m = m_values[-1]), 0.9, num = num_points, endpoint = False)
@@ -27,7 +27,7 @@ vec_tale = np.where(pred_max_dist > pred_crossing, pred_max_dist, np.nan)
 sep_line = [theory.sep_r(alpha = rank / m, m = m) for m in m_values]
 
 fig, ax = plt.subplots()
-c = ax.contourf(m_grid, r_grid, pred_crossing)
+c = ax.contourf(m_grid, r_grid, pred_crossing, levels = 50)
 ax.set_xlabel(r'$M$')
 ax.set_ylabel(r'$r$')
 ax.set_title(rf'Optimal $t$ for $\alpha M = {rank}$')
@@ -38,7 +38,7 @@ fig.colorbar(c, ax=ax)
 plt.show()
 
 fig, ax = plt.subplots()
-c = ax.contourf(m_grid, r_grid, pred_max_dist)
+c = ax.contourf(m_grid, r_grid, pred_max_dist, levels = 50)
 ax.set_xlabel(r'$M$')
 ax.set_ylabel(r'$r$')
 ax.set_title(rf'$\alpha M = {rank}$')
@@ -49,7 +49,7 @@ fig.colorbar(c, ax=ax)
 plt.show()
 
 fig, ax = plt.subplots()
-c = ax.contourf(m_grid, r_grid, vec_max)
+c = ax.contourf(m_grid, r_grid, vec_max, levels = 50)
 ax.set_xlabel(r'$M$')
 ax.set_ylabel(r'$r$')
 ax.set_title(rf'Optimal $t$ for $\alpha M = {rank}$')
@@ -60,7 +60,7 @@ fig.colorbar(c, ax=ax)
 plt.show()
 
 fig, ax = plt.subplots()
-c = ax.contourf(m_grid, r_grid, vec_tale)
+c = ax.contourf(m_grid, r_grid, vec_tale, levels = 50)
 ax.set_xlabel(r'$M$')
 ax.set_ylabel(r'$r$')
 ax.set_title(rf'$\alpha M = {rank}$')
