@@ -6,9 +6,10 @@ from tqdm import tqdm
 from matplotlib import animation
 
 
-alpha = 0.2
+alpha = 2/50
 m = 50
-r = 0.5
+r = 0.9241790771484375
+max_t = 200
 t_values = [0, 5, 12, 25]
 
 # calculate the maximum of the spectrum
@@ -26,7 +27,6 @@ line, = ax.plot(xs, [spec_func(x) for x in xs])
 text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
 
 total_frames = 100
-max_t = 50
 
 # code the updates
 def update(frame):

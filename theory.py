@@ -2,6 +2,26 @@ import numpy as np
 import math
 import scipy
 from tqdm import tqdm
+from time import time
+
+# Gives the discriminant instead
+def spec_disc(alpha, r, m, t):
+    mu1 = (1 - r ** 2) / m
+    mu2 = r ** 2 + (1 - r ** 2) / m
+
+    def disc(x):
+        x = x / (1 + t - t * x)
+        a = x * mu1 * mu2
+        b = (m * alpha - 1) * mu1 * mu2 - x * (mu1 + mu2)
+        c = (1 - alpha * (m - 1)) * mu1 + (1 - alpha) * mu2 + x
+        d = - 1
+
+        p = (3 * a * c - b ** 2) / (3 * a ** 2)
+        q = (2 * b ** 3 - 9 * a * b * c + 27 * a ** 2 * d) / (27 * a ** 3)
+
+        return (q / 2) ** 2 + (p / 3) ** 3
+
+    return disc
 
 # gives the spectral distribution, predicted with Edwards-Jones
 def spec_dist(alpha, r, m, t, diagonal = True):
@@ -172,7 +192,7 @@ def sep_r(alpha, m, tol = 1e-4, alpha_c = 0):
 
 def dist_max(alpha, r, m, t, tol = 1e-2, x_max = 100, diagonal = True, prints = True):
     f = spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = diagonal)
-    for x in np.arange(1, x_max, tol)[::-1]:
+    for x in np.arange(1.+tol, x_max, tol)[::-1]:
         if f(x) == 0:
             x_max = x
         else:
@@ -181,11 +201,17 @@ def dist_max(alpha, r, m, t, tol = 1e-2, x_max = 100, diagonal = True, prints = 
         print(f'x_max determined to be {x_max}')
     return x_max
 
-def dist_roots(alpha, r, m, t, tol = 1e-4, x_max = None):
+def dist_roots(alpha, r, m, t, tol, x_max = None):
     if x_max is None:
         x_max = dist_max(alpha, r, m, 0)
     f = spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = True)
-    xs = np.arange(0, x_max, tol)[1:]
+    for p in np.arange(10) + 3:
+        x_in = 10.**(-p)
+        if f(x_in) == 0:
+            break
+
+    xs = np.linspace(x_in, x_max, num = int(1/tol) + 1)
+
     roots_down = 0
     roots_up = 0
     roots = []
@@ -200,6 +226,59 @@ def dist_roots(alpha, r, m, t, tol = 1e-4, x_max = None):
     if len(roots) < 1 or len(roots) > 4 or roots_up > roots_down:
         raise Exception(rf'{roots_up} ascending and {roots_down} descending roots ({roots}) found for alpha = {alpha}, r = {r}, M = {m}, t = {t}.')
     return tuple(roots)
+
+def dist_roots_full(alpha, r, m, t, x_max = None):
+    if x_max is None:
+        x_max = dist_max(alpha, r, m, 0)
+    f = spec_disc(alpha = alpha, r = r, m = m, t = t)
+    for p in np.arange(10) + 3:
+        x_in = 10.**(-p)
+        if f(x_in) < 0:
+            break
+
+    xs = np.linspace(x_in, x_max, num = 100)
+
+    intervals = []
+
+    for idx_x, x0 in enumerate(xs[:-1]):
+        if f(x0) * f(xs[idx_x + 1]) < 0:
+            intervals.append((x0, xs[idx_x + 1]))
+    if len(intervals) == 2:
+        neg_x = neg_search_golden(f, intervals[0][1], intervals[1][0])
+        intervals = [intervals[0], (intervals[0][1], neg_x), (neg_x, intervals[1][0]), intervals[1]]
+
+    roots = [scipy.optimize.brentq(f, *args) for args in intervals]
+
+    return roots
+
+def neg_search_golden(f, a, b):
+    invphi = (math.sqrt(5) - 1) / 2
+
+    xs = np.linspace(a, b, 1000)
+    idx_high = -1
+    idx_low = 0
+    # in case the extrema of the interval are local minima, we have to restrict the interval
+    while f(xs[idx_high - 1]) > f(xs[idx_high]):
+        idx_high -= 1
+    while f(xs[idx_low]) < f(xs[idx_low + 1]):
+        idx_low += 1
+    a = xs[idx_low]
+    b = xs[idx_high]
+
+
+    guess = (a + b) / 2
+
+    while f(guess) >= 0:
+        c = b - (b - a) * invphi
+        d = a + (b - a) * invphi
+        if f(c) < f(d):
+            b = d
+        else:  # f(c) > f(d) to find the maximum
+            a = c
+        guess = (a + b) / 2
+        #print(guess)
+
+    return (b + a) / 2
 
 def peak2_var(alpha, r, m, t, tol = 1e-4):
     measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
@@ -293,6 +372,41 @@ def vec_tmr(func, t_values, m_values, r_buffer, rank, *args, **kwargs):
 
     return output
 
+def vec_mr(func, rank, m_values, r_values, *args, **kwargs):
+
+    len_x = len(m_values)
+    len_y = len(r_values)
+    output = np.empty((len_x, len_y), dtype=float)
+
+    with tqdm(total = len_x * len_y, disable = False) as pbar:
+        for idx_m, m in enumerate(m_values[::-1]):
+            alpha = rank / m
+            #print(f'Computing for m = {m}. ({idx_m}/50)')
+            for idx_r, r in enumerate(r_values):
+                t = time()
+                #print(f'Computing for r = {r}. ({idx_r}/50)')
+                output[idx_m, idx_r] = func(m = m, r = r, alpha = alpha, *args, **kwargs)
+                #print(f'Computed output in {time() - t} seconds.')
+                pbar.update(1)
+
+    return np.flip(output, axis = 0)
+
+def vec_r(func, r_values, *args, **kwargs):
+
+    len_r = len(r_values)
+    output = np.empty(len_r, dtype=float)
+
+    with tqdm(total = len_r, disable = True) as pbar:
+        for idx_r, r in enumerate(r_values):
+            t = time()
+            print(f'Computing for r = {r}. ({idx_r}/50)')
+            output[idx_r] = func(r = r, *args, **kwargs)
+            print(f'Computed output in {time() - t} seconds.')
+            pbar.update(1)
+
+    return output
+
+
 def peak_sep(alpha, r, m, t, tol = 1e-4, x_max = None):
     roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
     if len(roots) == 4:
@@ -302,8 +416,12 @@ def peak_sep(alpha, r, m, t, tol = 1e-4, x_max = None):
     else:
         return 0
 
-def peak_cms_diff(alpha, r, m, t, tol = 1e-4, x_max = None):
-    return peak_right_cm(alpha, r, m, t, tol, x_max = x_max) - peak_left_cm(alpha, r, m, t, tol, x_max = x_max)
+def peak_cms_diff(alpha, r, m, t, x_max = None):
+    roots = dist_roots_full(alpha, r, m, t, x_max)
+    f = spec_dist(alpha=alpha, r=r, m=m, t=t)
+    peak_cm_left = scipy.integrate.quad(lambda x: x * f(x), roots[0], roots[1])[0] / scipy.integrate.quad(lambda x: f(x), roots[0], roots[1])[0]
+    peak_cm_right = scipy.integrate.quad(lambda x: x * f(x), roots[2], roots[3])[0] / scipy.integrate.quad(lambda x: f(x), roots[2], roots[3])[0]
+    return peak_cm_right - peak_cm_left
 
 def peak_left_cm(alpha, r, m, t, tol = 1e-4, x_max = None):
     measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
@@ -315,7 +433,7 @@ def peak_left_cm(alpha, r, m, t, tol = 1e-4, x_max = None):
     else:
         return None
 
-def dist_cm(alpha, r, m, t, tol = 1e-4, x_max = None):
+def dist_cm(alpha, r, m, t, x_max = None):
     if x_max is None:
         x_max = dist_max(alpha, r, m, 0)
     measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
@@ -362,5 +480,37 @@ def peak_right_max(alpha, r, m, t, tol, x_max = None):
     return scipy.optimize.minimize_scalar(lambda x: -f(x), bounds=(x_min, x_max)).x
 
 
-def peak_left_tendency(alpha, r, m, t, tol, x_max = None):
-    return peak_left_max(alpha, r, m, t, tol, x_max) - peak_left_cm(alpha, r, m, t, tol, x_max)
+def peak_left_tendency(alpha, r, m, t, x_max = None):
+    roots = dist_roots_full(alpha, r, m, t, x_max)
+    f = spec_dist(alpha=alpha, r=r, m=m, t=t)
+    a = roots[0]
+    b = roots[1]
+    peak_max = scipy.optimize.minimize_scalar(lambda x: -f(x), bounds=(a, b)).x
+    peak_cm = scipy.integrate.quad(lambda x: x * f(x), a, b)[0] / scipy.integrate.quad(lambda x: f(x), a, b)[0]
+    return peak_max - peak_cm
+
+def t_max_dist(alpha, r, m, x_max = None):
+    if x_max is None:
+        x_max = dist_max(alpha, r, m, 0, prints = False)
+    if sep_alpha(r, m) < alpha:
+        return np.nan
+    else:
+        t0 = 0
+        t1 = 1
+        while peak_cms_diff(alpha, r, m, t1, x_max=x_max) > peak_cms_diff(alpha, r, m, t0, x_max=x_max):
+            t1 += 1
+            t0 += 1
+        t_max = t1
+        t_min = max(0, t0 - 1)
+        return scipy.optimize.minimize_scalar(lambda t: - peak_cms_diff(alpha, r, m, t, x_max = x_max), bounds = (t_min, t_max)).x
+
+def t_crossing(alpha, r, m):
+    x_max = dist_max(alpha, r, m, 0, prints = False)
+    if sep_alpha(r, m) < alpha:
+        return np.nan
+    else:
+        t1 = 1
+        while peak_left_tendency(alpha, r, m, t1, x_max = x_max) < 0:
+            t1 += 1
+        t0 = t1 - 1
+        return scipy.optimize.brentq(lambda t: peak_left_tendency(alpha, r, m, t, x_max = x_max), a = t0, b = t1)
