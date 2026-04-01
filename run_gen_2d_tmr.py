@@ -4,6 +4,7 @@ import experiments as exp
 from matplotlib import pyplot as plt
 import sys
 import theory
+import scipy
 
 neurons = 1000
 rank = 2
@@ -51,19 +52,19 @@ m_v = np.linspace(M_min, M_min+49, num = num_points)
 t_grid, m_grid = np.meshgrid(t_v, m_v, indexing='ij')
 
 pred_right_cm = lab.core.prediction(directory ='Predictions', func = theory.peak_right_cm, vec = theory.vec_tmr,
-                                    t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer, tol = tol)
+                                    t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer)
 
 pred_left_cm = lab.core.prediction(directory ='Predictions', func = theory.peak_left_cm, vec = theory.vec_tmr,
-                                   t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer, tol = tol)
+                                   t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer)
 
 pred_left_max = lab.core.prediction(directory = 'Predictions', func = theory.peak_left_max, vec = theory.vec_tmr,
-                           t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer, tol = tol)
+                           t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer)
 
 pred_right_max = lab.core.prediction(directory = 'Predictions', func = theory.peak_right_max, vec = theory.vec_tmr,
-                           t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer, tol = tol)
+                           t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer)
 
-pred_roots = lab.core.prediction(directory = 'Predictions', func = theory.dist_roots, vec = theory.vec_tmr,
-                           t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer, tol = tol)
+pred_roots = lab.core.prediction(directory = 'Predictions', func = theory.dist_roots_full, vec = theory.vec_tmr,
+                           t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer)
 
 pred_cm = lab.core.prediction(directory = 'Predictions', func = theory.dist_cm, vec = theory.vec_tmr,
                            t_values = t_v, m_values = m_v, rank = rank, r_buffer = r_buffer)
@@ -101,26 +102,52 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
 #pred_diff_right = np.where(t_grid > 10, pred_right_cm - pred_left_cm, np.nan)
 draw_plot(m_arc, header = 'Archetype recall', color_scheme = 'Blues')
 
+Z = (pred_left_max-pred_left_cm)*(pred_right_max - pred_left_max)
+interp_max = scipy.interpolate.RegularGridInterpolator((t_v, m_v), pred_right_max - pred_left_max, method='cubic')
+interp_left = scipy.interpolate.RegularGridInterpolator((t_v, m_v), pred_left_max-pred_left_cm , method='cubic')
+interp_prod = scipy.interpolate.RegularGridInterpolator((t_v, m_v), Z , method='cubic')
+t_fine = np.linspace(t_v[0], t_v[-1], 1000)
+m_fine = np.linspace(m_v[0], m_v[-1], 1000)
+X_fine, Y_fine = np.meshgrid(t_fine, m_fine, indexing='ij')
+Z_fine_max = interp_max((X_fine, Y_fine))
+Z_fine_left = interp_left((X_fine, Y_fine))
+Z_fine_prod = interp_prod((X_fine, Y_fine))
+
+
+x_argmax = t_v[np.argmax(Z, axis=0)]  # for each row (fixed y), find x of max
+plt.scatter(x_argmax, m_v, color='red')
+
 #plt.contour(t_grid, m_grid, pred_left_max, levels = [0], colors ='green', linestyles ='dashed')
-peak1 = plt.contour(t_grid, m_grid, pred_left_max-pred_left_cm, levels = [0], colors ='red', linestyles ='dashed')
-cms = plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [lvl], colors ='black', linestyles ='dashed')
+plt.contour(t_grid, m_grid, (pred_right_max - pred_left_max), levels = [0.17], colors ='red', linestyles ='dashed')
+plt.contour(t_grid, m_grid, pred_right_cm, levels = [0.05], colors ='orange', linestyles ='dashed')
+plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [lvl], colors ='black', linestyles ='dashed')
+#plt.contour(t_grid, m_grid, pred_right_max - pred_left_max, levels = [0.4], colors ='grey', linestyles ='dashed')
 #plt.contour(t_grid, m_grid, pred_right_cm-pred_left_cm, levels = [0.2], colors ='black', linestyles ='dashed')
 #plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [0.2], colors ='black', linestyles ='dashed')
 plt.show()
 
 #plt.contourf(t_grid, m_grid, pred_left_max-pred_left_cm)
 #plt.show()
-plt.contourf(t_grid, m_grid, pred_right_cm - pred_left_cm)
+plt.contourf(X_fine, Y_fine, Z_fine_max)
 plt.title(rf'$\alpha M = {rank}$')
 plt.colorbar()
 plt.show()
+
+plt.contourf(t_grid, m_grid, pred_left_max)
+plt.title(rf'$\alpha M = {rank}$')
+plt.colorbar()
+plt.show()
+
+#plt.contourf(t_grid, m_grid, Z)
+#plt.title(rf'$\alpha M = {rank}$')
+#plt.colorbar()
+#plt.show()
 #draw_plot(m_arc, header = 'Maximum archetype recall', color_scheme = 'Blues', apply_over_samples = np.max)
 #draw_plot(m_ex, header = 'Example recall', color_scheme = 'YlOrBr')
 #draw_plot(m_ex, header = 'Maximum example recall', color_scheme = 'YlOrBr', apply_over_samples = np.max)
 #draw_plot(its, header = 'Maximum iterations', color_scheme = 'Reds', vmax = max_it, apply_over_samples=np.max)
 #draw_plot(errors, header = 'Maximum final errors', color_scheme = 'Greys', apply_over_samples=np.max)
 #draw_plot(errors, header = 'Mean final errors', color_scheme = 'Greys')
-print((pred_right_cm-pred_left_cm)[0,:])
 sys.exit()
 fig, ax = plt.subplots(1)
 

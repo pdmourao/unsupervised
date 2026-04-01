@@ -162,23 +162,10 @@ def mags_int(*args, **kwargs):
     cumulative = scipy.integrate.quad(dist, -np.inf, 0)[0]
     return 1 - 2 * cumulative
 
-# bissection method
-def findroot(f, x1, x2, tol = 1e-3, limit = None):
-    if f(x1) * f(x2) > 0:
-        return limit
-    x = x1 + (x2 - x1)/2
-    while abs(x2-x1) > tol:
-        if f(x) * f(x1) > 0:
-            x1 = x
-        else:
-            x2 = x
-        x = x1 + (x2 - x1) / 2
-    return x
-
-def gen(arg, x1, x2, tol = 1e-3, **kwargs):
+def gen(arg, x1, x2, **kwargs):
     def f(x):
         return mags(attractor = 'arc', red = True, **{arg: x}, **kwargs) - mags(attractor = 'ex', red = True, **{arg: x}, **kwargs)
-    return findroot(f, x1, x2, tol = tol)
+    return scipy.optimize.brenq(f, x1, x2)
 
 def sep_alpha(r, m):
     mu1 = (1 - r ** 2)/m
@@ -187,10 +174,13 @@ def sep_alpha(r, m):
     p2 = 1/m
     return (mu2-mu1)**2/(m*(np.cbrt(p1*mu1**2)+np.cbrt(p2*mu2**2))**3)
 
-def sep_r(alpha, m, tol = 1e-4, alpha_c = 0):
-    return findroot(lambda r: sep_alpha(r, m) - alpha + alpha_c, 0, 1, tol = tol, limit = 1)
+def sep_r(alpha, m, limit = np.nan):
+    try:
+        return scipy.optimize.brentq(lambda r: sep_alpha(r, m) - alpha, 0, 1)
+    except ValueError:
+        return limit
 
-def dist_max(alpha, r, m, t, tol = 1e-2, x_max = 100, diagonal = True, prints = True):
+def dist_max(alpha, r, m, t, tol = 1e-2, x_max = 100, diagonal = True, prints = False):
     f = spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = diagonal)
     for x in np.arange(1.+tol, x_max, tol)[::-1]:
         if f(x) == 0:
@@ -209,7 +199,6 @@ def dist_roots(alpha, r, m, t, tol, x_max = None):
         x_in = 10.**(-p)
         if f(x_in) == 0:
             break
-
     xs = np.linspace(x_in, x_max, num = int(1/tol) + 1)
 
     roots_down = 0
@@ -349,7 +338,7 @@ def vec_tmr(func, t_values, m_values, r_buffer, rank, *args, **kwargs):
     r_values = [sep_r(alpha=rank / m, m=m) + r_buffer for m in m_values]
 
     output_test = func(t = t_values[0], m = m_values[0], r = r_values[0], alpha = rank / m_values[0], *args, **kwargs)
-    is_tuple = isinstance(output_test, tuple)
+    is_tuple = isinstance(output_test, tuple) or isinstance(output_test, list)
 
     if is_tuple:
         output = np.empty((len(output_test), len_x, len_y), dtype=float)
@@ -391,6 +380,34 @@ def vec_mr(func, rank, m_values, r_values, *args, **kwargs):
 
     return np.flip(output, axis = 0)
 
+def vec_tm(func, rank, t_values, m_values, *args, **kwargs):
+
+    len_x = len(t_values)
+    len_y = len(m_values)
+
+    output_test = func(t=t_values[0], m=m_values[0], alpha=rank / m_values[0], *args, **kwargs)
+    is_tuple = isinstance(output_test, tuple) or isinstance(output_test, list)
+
+    if is_tuple:
+        output = np.empty((len(output_test), len_x, len_y), dtype=float)
+    else:
+        output = np.empty((len_x, len_y), dtype=float)
+
+    with tqdm(total = len_x * len_y, disable = False) as pbar:
+        for idx_t, t in enumerate(t_values):
+            #print(f'Computing for m = {m}. ({idx_m}/50)')
+            for idx_m, m in enumerate(m_values):
+                #print(f'Computing for r = {r}. ({idx_r}/50)')
+                if is_tuple:
+                    for idx, value in enumerate(func(t = t, m = m, alpha = rank / m, *args, **kwargs)):
+                        output[idx, idx_t, idx_m] = value
+                else:
+                    output[idx_t, idx_m] = func(m = m, t = t, alpha =  rank / m, *args, **kwargs)
+                #print(f'Computed output in {time() - t} seconds.')
+                pbar.update(1)
+
+    return output
+
 def vec_r(func, r_values, *args, **kwargs):
 
     len_r = len(r_values)
@@ -423,15 +440,10 @@ def peak_cms_diff(alpha, r, m, t, x_max = None):
     peak_cm_right = scipy.integrate.quad(lambda x: x * f(x), roots[2], roots[3])[0] / scipy.integrate.quad(lambda x: f(x), roots[2], roots[3])[0]
     return peak_cm_right - peak_cm_left
 
-def peak_left_cm(alpha, r, m, t, tol = 1e-4, x_max = None):
+def peak_left_cm(alpha, r, m, t, x_max = None):
     measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
-    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
-    if len(roots) == 4:
-        return scipy.integrate.quad(lambda x: x * measure(x), roots[0], roots[1])[0]/scipy.integrate.quad(lambda x: measure(x), roots[0], roots[1])[0]
-    elif len(roots) == 3:
-        return scipy.integrate.quad(lambda x: x * measure(x), 0., roots[0])[0]/scipy.integrate.quad(lambda x: measure(x), 0., roots[0])[0]
-    else:
-        return None
+    roots = dist_roots_full(alpha = alpha, r = r, m = m, t = t, x_max = x_max)
+    return scipy.integrate.quad(lambda x: x * measure(x), roots[0], roots[1])[0]/scipy.integrate.quad(lambda x: measure(x), roots[0], roots[1])[0]
 
 def dist_cm(alpha, r, m, t, x_max = None):
     if x_max is None:
@@ -439,45 +451,21 @@ def dist_cm(alpha, r, m, t, x_max = None):
     measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
     return scipy.integrate.quad(lambda x: x * measure(x), 0., x_max)[0]
 
-def peak_right_cm(alpha, r, m, t, tol, x_max = None):
+def peak_right_cm(alpha, r, m, t, x_max = None):
     measure = spec_dist(alpha=alpha, r=r, m=m, t=t, diagonal=True)
-    roots = dist_roots(alpha = alpha, r = r, m = m, t = t, tol = tol, x_max = x_max)
-    if len(roots) == 4:
-        return scipy.integrate.quad(lambda x: x * measure(x), roots[2], roots[3])[0]/scipy.integrate.quad(lambda x: measure(x), roots[2], roots[3])[0]
-    elif len(roots) == 3:
-        return scipy.integrate.quad(lambda x: x * measure(x), roots[1], roots[2])[0]/scipy.integrate.quad(lambda x: measure(x), roots[1], roots[2])[0]
-    else:
-        return None,
+    roots = dist_roots_full(alpha = alpha, r = r, m = m, t = t, x_max = x_max)
+    return scipy.integrate.quad(lambda x: x * measure(x), roots[2], roots[3])[0]/scipy.integrate.quad(lambda x: measure(x), roots[2], roots[3])[0]
 
-def peak_left_max(alpha, r, m, t, tol, x_max = None):
-    roots = dist_roots(alpha=alpha, r=r, m=m, t=t, tol=tol, x_max = x_max)
-    if len(roots) == 4:
-        x_min = roots[0]
-        x_max = roots[1]
-    elif len(roots) == 3:
-        x_min = 0.
-        x_max = roots[0]
-    else:
-        return None
+def peak_left_max(alpha, r, m, t, x_max = None):
+    roots = dist_roots_full(alpha=alpha, r=r, m=m, t=t, x_max = x_max)
+    f = spec_dist(alpha=alpha, r=r, m=m, t=t)
+    return scipy.optimize.minimize_scalar(lambda x: -f(x), bounds=(roots[0], roots[1])).x
 
+def peak_right_max(alpha, r, m, t, x_max = None):
+    roots = dist_roots_full(alpha=alpha, r=r, m=m, t=t, x_max = x_max)
     f = spec_dist(alpha=alpha, r=r, m=m, t=t)
 
-    return scipy.optimize.minimize_scalar(lambda x: -f(x), bounds=(x_min, x_max)).x
-
-def peak_right_max(alpha, r, m, t, tol, x_max = None):
-    roots = dist_roots(alpha=alpha, r=r, m=m, t=t, tol=tol, x_max = x_max)
-    if len(roots) == 4:
-        x_min = roots[2]
-        x_max = roots[3]
-    elif len(roots) == 3:
-        x_min = roots[1]
-        x_max = roots[2]
-    else:
-        return None
-
-    f = spec_dist(alpha=alpha, r=r, m=m, t=t)
-
-    return scipy.optimize.minimize_scalar(lambda x: -f(x), bounds=(x_min, x_max)).x
+    return scipy.optimize.minimize_scalar(lambda x: -f(x), bounds=(roots[2], roots[3])).x
 
 
 def peak_left_tendency(alpha, r, m, t, x_max = None):
