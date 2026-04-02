@@ -310,10 +310,11 @@ def gen_tm(entropy, neurons, rank, t_values, m_values, r, p, initial, max_it, di
     len_x = len(t_values)
     len_y = len(m_values)
 
-    while theory.sep_r(alpha=rank / m_values[0], m=m_values[0]) > r:
-        m_values += 1
+    m_values_alt = np.copy(m_values)
+    while theory.sep_r(alpha=rank / m_values_alt[0], m=m_values_alt[0]) > r:
+        m_values_alt += 1
 
-    print(f'Determined that M should start at {m_values[0]}.')
+    print(f'Determined that M should start at {m_values_alt[0]}.')
 
     rng_list = np.random.SeedSequence(entropy).spawn(len_x * len_y)
     mags_arc = np.empty((len_x, len_y), dtype = float)
@@ -323,10 +324,10 @@ def gen_tm(entropy, neurons, rank, t_values, m_values, r, p, initial, max_it, di
 
     with tqdm(total = len_x * len_y) as pbar:
         for idx_t, t in enumerate(t_values):
-            for idx_m, m in enumerate(m_values):
+            for idx_m, m in enumerate(m_values_alt):
 
                 # we take the rng for this iteration and provide it to the system with the rest of the inputs
-                this_ss = rng_list[idx_t * len(m_values) + idx_m]
+                this_ss = rng_list[idx_t * len(m_values_alt) + idx_m]
                 system = dream(neurons=neurons, k=int(rank * neurons / m), r=r, m=m, t=t,
                                rng_ss=this_ss, diagonal=diagonal)
                 # generate the iteraction matrix

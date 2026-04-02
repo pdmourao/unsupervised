@@ -16,7 +16,7 @@ initial = 'new_ex'
 tol = 1e-4
 num_points = 100
 
-r_values = [0.3, 0.5, 0.7]
+r_values = np.array([0.3, 0.5, 0.7])
 
 
 draw_capacity = False
@@ -46,20 +46,27 @@ def draw_plot(array, ax, header, color_scheme, x_min, x_max, y_min, y_max, apply
 
 for idx_rank, rank in enumerate(ranks):
     for idx_r, r in enumerate(r_values):
-
-        experiment = lab.Experiment(directory = 'Data_remote', func = exp.gen_tm, m_values = m_values, r = r,
+        m_values_alt = np.copy(m_values)
+        while theory.sep_r(alpha=rank / m_values_alt[0], m=m_values_alt[0]) > r:
+            m_values_alt += 1
+        try:
+            experiment = lab.Experiment(directory = 'Data_remote', func = exp.gen_tm, m_values = m_values, r = r,
                                         neurons = neurons, rank = rank, t_values = t_values, p = p, reduced = reduced, diagonal = diagonal,
                                         initial = initial, max_it = max_it)
+        except AssertionError:
+            experiment = lab.Experiment(directory='Data_remote', func=exp.gen_tm, m_values=m_values_alt, r=r,
+                                        neurons=neurons, rank=rank, t_values=t_values, p=p, reduced=reduced,
+                                        diagonal=diagonal,
+                                        initial=initial, max_it=max_it)
+
         m_arc, m_ex, its, errors = experiment.read()
 
-        while theory.sep_r(alpha=rank / m_values[0], m=m_values[0], limit = 1) > r:
-            m_values += 1
 
         x_min, x_max = t_values[0].astype(float).item(), t_values[-1].astype(float).item()
-        y_min, y_max = m_values[0].item(), m_values[-1].item()
+        y_min, y_max = m_values_alt[0].item(), m_values_alt[-1].item()
 
         step_x = (t_values[1] - t_values[0])/2
-        step_y = (m_values[1] - m_values[0])/2
+        step_y = (m_values_alt[1] - m_values_alt[0])/2
 
         x_min -= step_x
         x_max += step_x
@@ -67,55 +74,56 @@ for idx_rank, rank in enumerate(ranks):
         y_max += step_y
 
         t_v = np.linspace(t_values[0], t_values[-1], num = num_points)
-        m_v = np.linspace(m_values[0], m_values[-1], num = num_points)
+        m_v = np.linspace(m_values_alt[0], m_values_alt[-1], num = num_points)
 
         t_grid, m_grid = np.meshgrid(t_v, m_v, indexing='ij')
 
-        pred_right_cm = lab.core.prediction(directory ='Predictions', func = theory.peak_right_cm, vec = theory.vec_tm,
-                                                t_values = t_v, m_values = m_v, rank = rank, r = r)
+        #pred_right_cm = lab.core.prediction(directory ='Predictions', func = theory.peak_right_cm, vec = theory.vec_tm,
+        #                                        t_values = t_v, m_values = m_v, rank = rank, r = r)
 
-        pred_left_cm = lab.core.prediction(directory ='Predictions', func = theory.peak_left_cm, vec = theory.vec_tm,
-                                               t_values = t_v, m_values = m_v, rank = rank, r = r)
+        #pred_left_cm = lab.core.prediction(directory ='Predictions', func = theory.peak_left_cm, vec = theory.vec_tm,
+        #                                       t_values = t_v, m_values = m_v, rank = rank, r = r)
 
-        pred_left_max = lab.core.prediction(directory = 'Predictions', func = theory.peak_left_max, vec = theory.vec_tm,
-                                       t_values = t_v, m_values = m_v, rank = rank, r = r)
+        #pred_left_max = lab.core.prediction(directory = 'Predictions', func = theory.peak_left_max, vec = theory.vec_tm,
+         #                              t_values = t_v, m_values = m_v, rank = rank, r = r)
 
-        pred_right_max = lab.core.prediction(directory = 'Predictions', func = theory.peak_right_max, vec = theory.vec_tm,
-                                       t_values = t_v, m_values = m_v, rank = rank, r = r)
+        #pred_right_max = lab.core.prediction(directory = 'Predictions', func = theory.peak_right_max, vec = theory.vec_tm,
+        #                               t_values = t_v, m_values = m_v, rank = rank, r = r)
 
-        pred_roots = lab.core.prediction(directory = 'Predictions', func = theory.dist_roots_full, vec = theory.vec_tm,
-                                       t_values = t_v, m_values = m_v, rank = rank, r = r)
+        #pred_roots = lab.core.prediction(directory = 'Predictions', func = theory.dist_roots_full, vec = theory.vec_tm,
+        #                               t_values = t_v, m_values = m_v, rank = rank, r = r)
 
-        pred_cm = lab.core.prediction(directory = 'Predictions', func = theory.dist_cm, vec = theory.vec_tm, t_values = t_v,
-                                      m_values = m_v, rank = rank, r = r)
+        #pred_cm = lab.core.prediction(directory = 'Predictions', func = theory.dist_cm, vec = theory.vec_tm, t_values = t_v,
+        #                              m_values = m_v, rank = rank, r = r)
 
-        pred_right_cm -= pred_cm
-        pred_left_cm -= pred_cm
-        pred_right_max -= pred_cm
-        pred_left_max -= pred_cm
+        #pred_right_cm -= pred_cm
+        #pred_left_cm -= pred_cm
+        #pred_right_max -= pred_cm
+        #pred_left_max -= pred_cm
 
-        for idx in range(len(pred_roots)):
-            pred_roots[idx] -= pred_cm
+        #for idx in range(len(pred_roots)):
+
+        #    pred_roots[idx] -= pred_cm
 
         # print(f'Maximum recorded iterations and errors were {np.max(its)} and {np.max(errors)}, respectively')
 
         ax1 = axs1[idx_rank, idx_r]
         ax2 = axs2[idx_rank, idx_r]
         #pred_diff_right = np.where(t_grid > 10, pred_right_cm - pred_left_cm, np.nan)
-        c = draw_plot(m_arc, ax = ax1, header = 'Archetype recall', color_scheme = 'Blues')
+        c = draw_plot(m_arc, ax = ax1, header = 'Archetype recall', color_scheme = 'Blues', x_min = x_min, x_max = x_max, y_min = y_min, y_max = y_max)
         fig1.colorbar(c, ax=ax1)
         #plt.contour(t_grid, m_grid, pred_left_max, levels = [0], colors ='green', linestyles ='dashed')
-        peak1 = ax1.contour(t_grid, m_grid, pred_left_max-pred_left_cm, levels = [0], colors ='red', linestyles ='dashed')
-        cms = ax1.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [0.35], colors ='black', linestyles ='dashed')
+        #peak1 = ax1.contour(t_grid, m_grid, pred_left_max-pred_left_cm, levels = [0], colors ='red', linestyles ='dashed')
+        #cms = ax1.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [0.35], colors ='black', linestyles ='dashed')
         #plt.contour(t_grid, m_grid, pred_right_cm-pred_left_cm, levels = [0.2], colors ='black', linestyles ='dashed')
         #plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [0.2], colors ='black', linestyles ='dashed')
         #plt.show()
 
         #ax2.contourf(t_grid, m_grid, pred_left_max-pred_left_cm)
         #plt.show()
-        c = ax2.contourf(t_grid, m_grid, pred_right_cm - pred_left_cm)
-        ax2.title(rf'$\alpha M = {rank}$')
-        fig2.colorbar(c, ax = ax2)
+        #c = ax2.contourf(t_grid, m_grid, pred_right_cm - pred_left_cm)
+        #ax2.title(rf'$\alpha M = {rank}$')
+        #fig2.colorbar(c, ax = ax2)
 plt.show()
 #draw_plot(m_arc, header = 'Maximum archetype recall', color_scheme = 'Blues', apply_over_samples = np.max)
 #draw_plot(m_ex, header = 'Example recall', color_scheme = 'YlOrBr')

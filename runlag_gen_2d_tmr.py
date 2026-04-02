@@ -3,12 +3,18 @@ import laboratory as lab
 import experiments as exp
 
 samples = 10
+rank = 1.1
+
+if rank == 5:
+    M_in = 11
+else:
+    M_in = 5
 
 t_values = np.linspace(0, 49, num = 50, endpoint = True)
-m_values = np.linspace(5, 54, num = 50, dtype = int)
+m_values = np.linspace(M_in, M_in + 49, num = 50, dtype = int)
 
 kwargs = {'neurons': 1000,
-          'rank': 2,
+          'rank': rank,
           'max_it': 200,
           'reduced': 'full',
           'diagonal': False,
