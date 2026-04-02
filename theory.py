@@ -477,20 +477,34 @@ def peak_left_tendency(alpha, r, m, t, x_max = None):
     peak_cm = scipy.integrate.quad(lambda x: x * f(x), a, b)[0] / scipy.integrate.quad(lambda x: f(x), a, b)[0]
     return peak_max - peak_cm
 
-def t_max_dist(alpha, r, m, x_max = None):
+def peak_cross_dist(alpha, r, m, t, x_max = None):
+    roots = dist_roots_full(alpha=alpha, r=r, m=m, t=t, x_max = x_max)
+    f = spec_dist(alpha=alpha, r=r, m=m, t=t)
+    left_max = scipy.optimize.minimize_scalar(lambda x: -f(x), bounds=(roots[0], roots[1])).x
+    right_max = scipy.optimize.minimize_scalar(lambda x: -f(x), bounds=(roots[2], roots[3])).x
+    left_cm = scipy.integrate.quad(lambda x: x * f(x), roots[0], roots[1])[0]/scipy.integrate.quad(lambda x: f(x), roots[0], roots[1])[0]
+    return (left_max - left_cm) * (right_max - left_max)
+
+def t_max(f, alpha, r, m, x_max = None, t0 = 0):
     if x_max is None:
         x_max = dist_max(alpha, r, m, 0, prints = False)
     if sep_alpha(r, m) < alpha:
         return np.nan
     else:
-        t0 = 0
-        t1 = 1
-        while peak_cms_diff(alpha, r, m, t1, x_max=x_max) > peak_cms_diff(alpha, r, m, t0, x_max=x_max):
+        t0 = t0
+        t1 = t0+1
+        while f(alpha, r, m, t1, x_max=x_max) > f(alpha, r, m, t0, x_max=x_max):
             t1 += 1
             t0 += 1
         t_max = t1
         t_min = max(0, t0 - 1)
-        return scipy.optimize.minimize_scalar(lambda t: - peak_cms_diff(alpha, r, m, t, x_max = x_max), bounds = (t_min, t_max)).x
+        return scipy.optimize.minimize_scalar(lambda t: - f(alpha, r, m, t, x_max = x_max), bounds = (t_min, t_max)).x
+
+def t_max_dist(alpha, r, m, x_max = None):
+    return t_max(peak_cms_diff, alpha, r, m, x_max = x_max)
+
+def t_max_cross_dist(alpha, r, m, x_max = None):
+    return t_max(peak_cross_dist, alpha, r, m, x_max = x_max, t0 = t_crossing(alpha, r, m))
 
 def t_crossing(alpha, r, m):
     x_max = dist_max(alpha, r, m, 0, prints = False)
