@@ -2,8 +2,8 @@ import numpy as np
 import laboratory as lab
 import experiments as exp
 
-samples = 10
-rank = 1.1
+samples = 50
+rank = 5
 
 if rank == 5:
     M_in = 11

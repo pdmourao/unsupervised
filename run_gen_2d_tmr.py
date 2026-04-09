@@ -7,7 +7,7 @@ import theory
 import scipy
 
 neurons = 1000
-rank = 5
+rank = 2
 p = 1
 # samples = 10
 max_it = 200
@@ -16,13 +16,23 @@ diagonal = False
 initial = 'new_ex'
 alpha_c = 0.138
 tol = 1e-4
-num_points = 100
-if rank == 2:
-    M_min = 5
-    lvl = 0.35
-elif rank == 5:
+
+if rank == 5:
+    num_points = 100
+    num_fine = 1000
     M_min = 11
-    lvl = 0.2
+    lvl = 0.13
+elif rank == 2:
+    num_points = 100
+    num_fine = 1000
+    M_min = 5
+    lvl = 0.15
+else:
+    num_points = 50
+    num_fine = 50
+    M_min = 5
+    lvl = 0.15
+
 
 draw_capacity = False
 
@@ -35,8 +45,8 @@ m_values = np.linspace(M_min, M_min+49, num = 50, dtype = int)
 r_buffer = 0.05
 
 
-t_fine = np.linspace(t_v[0], t_v[-1], 1000)
-m_fine = np.linspace(m_v[0], m_v[-1], 1000)
+t_fine = np.linspace(t_v[0], t_v[-1], num_fine)
+m_fine = np.linspace(m_v[0], m_v[-1], num_fine)
 t_grid, m_grid = np.meshgrid(t_fine, m_fine, indexing='ij')
 
 experiment = lab.Experiment(directory = 'Data_remote', func = exp.gen_tm_transition, m_values = m_values, r_buffer = r_buffer,
@@ -79,17 +89,19 @@ def interp_grid(array):
     interp = scipy.interpolate.RegularGridInterpolator((t_v, m_v), array, method='cubic')
     return interp((t_grid, m_grid))
 
-pred_cm = interp_grid(pred_cm)
-pred_right_cm = interp_grid(pred_right_cm)
-pred_left_cm = interp_grid(pred_left_cm)
-pred_right_max = interp_grid(pred_right_max)
+if rank == 2 or rank == 5:
+    pred_cm = interp_grid(pred_cm)
+    pred_right_cm = interp_grid(pred_right_cm)
+    pred_left_cm = interp_grid(pred_left_cm)
+    pred_right_max = interp_grid(pred_right_max)
+    pred_roots = np.array([interp_grid(array) for array in pred_roots])
 
 pred_right_cm -= pred_cm
 pred_left_cm -= pred_cm
 pred_right_max -= pred_cm
 pred_left_max -= pred_cm
 
-pred_roots = np.array([interp_grid(array) - pred_cm for array in pred_roots])
+pred_roots = np.array([array - pred_cm for array in pred_roots])
 
 # print(f'Maximum recorded iterations and errors were {np.max(its)} and {np.max(errors)}, respectively')
 
@@ -122,7 +134,7 @@ x_argmax = t_fine[np.argmax(Z, axis=0)]  # for each row (fixed y), find x of max
 plt.plot(x_argmax, m_fine, color='red')
 
 #plt.contour(t_grid, m_grid, pred_left_max, levels = [0], colors ='green', linestyles ='dashed')
-plt.contour(t_grid, m_grid, (pred_right_max - pred_left_max), levels = [0.16], colors ='black', linestyles ='dashed')
+plt.contour(t_grid, m_grid, (pred_right_max - pred_left_max), levels = [lvl], colors ='black', linestyles ='dashed')
 #plt.contour(t_grid, m_grid, pred_right_cm, levels = [0.05], colors ='orange', linestyles ='dashed')
 #plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [lvl], colors ='black', linestyles ='dashed')
 #plt.contour(t_grid, m_grid, pred_right_max - pred_left_max, levels = [0.4], colors ='grey', linestyles ='dashed')

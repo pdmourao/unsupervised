@@ -7,12 +7,12 @@ import theory
 
 neurons = 1000
 rank = 2
-p = 1
+p = 0.9
 # samples = 10
 max_it = 200
 reduced = 'full'
-diagonal = True
-initial = 'new_ex'
+diagonal = False
+initial = 'ex'
 alpha_c = 0.138
 
 draw_capacity = rank > alpha_c
