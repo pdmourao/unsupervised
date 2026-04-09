@@ -7,7 +7,7 @@ import scipy
 import theory
 import sys
 
-rank = 5
+rank = 2
 num_points = 100
 
 m_values = np.linspace(1, 50, num = num_points)
@@ -38,5 +38,7 @@ ax.set_title(rf'Optimal $t$ for $\alpha M = {rank}$')
 ax.autoscale(False)
 ax.plot(m_values, sep_line, linestyle = 'dashed', color = 'black', linewidth=w)
 fig.colorbar(c, ax = ax)
+alpha_c=0.138
+ax.vlines(x=rank / alpha_c, ymin=r_values[0], ymax=r_values[-1], colors='red')
 plt.show()
 
