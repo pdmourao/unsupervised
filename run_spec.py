@@ -6,52 +6,50 @@ from tqdm import tqdm
 import sys
 import experiments as exp
 
+plt.rcParams.update({
+    'axes.labelsize': 16,
+    'axes.titlesize': 18,
+    'xtick.labelsize': 14,
+    'ytick.labelsize': 14,
+})
 
-
-t = 0
-num_points = 50
-rank = 5
-
-m_values = np.linspace(1, 50, num = num_points, dtype = int)
-r_values = np.linspace(theory.sep_r(alpha = rank / m_values[-1], m = m_values[-1]), 0.9, num = num_points, endpoint = False)
-idx = 1
-
-idx_m = int(idx / num_points)
-idx_r = idx - idx_m * num_points
-m = m_values[-idx_m - 1]
-r = r_values[idx_r]
-print(m)
-print(r)
-alpha = rank / m
+t = 1
+alpha = 0.1
+m = 50
+r=0.3
 
 
 #print(theory.dist_roots(alpha = alpha, r = r, m = m, t = t, tol = 1e-2))
-print(theory.sep_r(alpha, m))
+#print(theory.sep_r(alpha, m))
 #print(theory.dist_roots_full(alpha = alpha, r = r, m = m, t = t, x_max =  1.24))
 #[print(theory.peak_cms_diff(alpha = alpha, r = r, m = m, t = t)) for t in range(100)]
-print(theory.t_max_dist(alpha = alpha, r = r, m = m))
+#print(theory.t_max_dist(alpha = alpha, r = r, m = m))
 #theory.peak_left_tendency(alpha, r, m, t = 87)
 #[print(theory.peak_left_tendency(alpha, r, m, tt)) for tt in range(100)]
 
-neurons = 500
-samples = 1
+neurons = 1000
+samples = 50
 
-spec = exp.spec_nosave(neurons = neurons, samples = samples, diagonal = True, alpha = alpha, r = r, m = m, t = t)
+spec = exp.spec_nosave(neurons = neurons, samples = samples, diagonal = False, alpha = alpha, r = r, m = m, t = t)
 plt.hist(np.ravel(spec), bins='fd', density=True)
 x_min, x_max = plt.xlim()
 
-print(np.mean(spec))
-
 # function for theoretical spectrum
-spec_func = theory.spec_dist(alpha = alpha, r = r, m = m, t = t)
+spec_func = theory.spec_dist(alpha = alpha, r = r, m = m, t = t, diagonal = False)
 disc_func = theory.spec_disc( alpha = alpha, r = r, m = m, t = t)
 print(disc_func(1.23))
 xs = np.linspace(x_min, x_max, num = 10000)
 # compute theoretical spectrum
 ys = [spec_func(x) for x in tqdm(xs)]
-ys_d = [disc_func(x) for x in tqdm(xs)]
+#ys_d = [disc_func(x) for x in tqdm(xs)]
 
 plt.plot(xs, ys)
+if t > 0:
+    plt.title(rf'$r={r}$, $t={t}$')
+else:
+    plt.title(rf'$r={r}$')
+plt.xlabel(r'$\lambda$')
+plt.ylabel(r'$\tilde{\rho}(\lambda)$')
 #plt.plot(xs, ys_d)
 #plt.ylim(-1, 100)
 plt.show()

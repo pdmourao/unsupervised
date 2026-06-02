@@ -26,12 +26,20 @@ elif rank == 2:
     num_points = 100
     num_fine = 1000
     M_min = 5
-    lvl = 0.15
+    lvl = 0.17
 else:
     num_points = 50
     num_fine = 50
     M_min = 5
     lvl = 0.15
+
+
+plt.rcParams.update({
+    'axes.labelsize': 16,
+    'axes.titlesize': 16,
+    'xtick.labelsize': 14,
+    'ytick.labelsize': 14,
+})
 
 
 draw_capacity = False
@@ -121,7 +129,7 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
 
     ax.set_xlabel(r'$t$')
     ax.set_ylabel(r'$M$')
-    ax.set_title(rf'$\alpha M = {rank}$')
+    ax.set_title(rf'Archetype recall for $\alpha M = {rank}$')
 
     fig.colorbar(c, ax=ax)
 
@@ -150,7 +158,9 @@ plt.show()
 #plt.show()
 
 plt.contourf(t_grid, m_grid, pred_right_max - pred_left_max, levels = 20)
-plt.title(rf'$\alpha M = {rank}$')
+plt.xlabel(r'$t$')
+plt.ylabel(r'$M$')
+plt.title(rf"Distance between the maxima for $\alpha M = {rank}$", fontsize = 14)
 plt.colorbar()
 plt.show()
 

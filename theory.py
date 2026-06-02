@@ -217,9 +217,12 @@ def dist_roots(alpha, r, m, t, tol, x_max = None):
     return tuple(roots)
 
 def dist_roots_full(alpha, r, m, t, x_max = None):
+
     if x_max is None:
         x_max = dist_max(alpha, r, m, 0)
     f = spec_disc(alpha = alpha, r = r, m = m, t = t)
+
+    # Calculates a sufficiently low value of x for which the spectrum is 0
     for p in np.arange(10) + 3:
         x_in = 10.**(-p)
         if f(x_in) < 0:
@@ -227,11 +230,17 @@ def dist_roots_full(alpha, r, m, t, x_max = None):
 
     xs = np.linspace(x_in, x_max, num = 100)
 
+    # Finds approximate intervals for the roots by checking for changes in the sign
     intervals = []
 
+
     for idx_x, x0 in enumerate(xs[:-1]):
+        #print(f'Trying x = {x0}')
+        #print(f(x0))
+        #print(f(xs[idx_x + 1]))
         if f(x0) * f(xs[idx_x + 1]) < 0:
             intervals.append((x0, xs[idx_x + 1]))
+
     if len(intervals) == 2:
         neg_x = neg_search_golden(f, intervals[0][1], intervals[1][0])
         intervals = [intervals[0], (intervals[0][1], neg_x), (neg_x, intervals[1][0]), intervals[1]]
@@ -375,7 +384,7 @@ def vec_mr(func, rank, m_values, r_values, *args, **kwargs):
                 t = time()
                 #print(f'Computing for r = {r}. ({idx_r}/50)')
                 output[idx_m, idx_r] = func(m = m, r = r, alpha = alpha, *args, **kwargs)
-                #print(f'Computed output in {time() - t} seconds.')
+                #print(f'Computed output in {time() - t} seconds.\n')
                 pbar.update(1)
 
     return np.flip(output, axis = 0)
@@ -488,7 +497,7 @@ def peak_cross_dist(alpha, r, m, t, x_max = None):
 def t_max(f, alpha, r, m, x_max = None, t0 = 0):
     if x_max is None:
         x_max = dist_max(alpha, r, m, 0, prints = False)
-    if sep_alpha(r, m) < alpha:
+    if sep_alpha(r, m) <= alpha:
         return np.nan
     else:
         t0 = t0
@@ -496,6 +505,8 @@ def t_max(f, alpha, r, m, x_max = None, t0 = 0):
         while f(alpha, r, m, t1, x_max=x_max) > f(alpha, r, m, t0, x_max=x_max):
             t1 += 1
             t0 += 1
+            #ff = f(alpha, r, m, t1, x_max=x_max)
+
         t_max = t1
         t_min = max(0, t0 - 1)
         return scipy.optimize.minimize_scalar(lambda t: - f(alpha, r, m, t, x_max = x_max), bounds = (t_min, t_max)).x
@@ -508,7 +519,7 @@ def t_max_cross_dist(alpha, r, m, x_max = None):
 
 def t_crossing(alpha, r, m):
     x_max = dist_max(alpha, r, m, 0, prints = False)
-    if sep_alpha(r, m) < alpha:
+    if sep_alpha(r = r, m = m) <= alpha:
         return np.nan
     else:
         t1 = 1

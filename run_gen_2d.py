@@ -6,7 +6,7 @@ from tqdm import tqdm
 import theory
 
 neurons = 1000
-rank = 2
+rank = 0.1
 p = 0.9
 # samples = 10
 max_it = 200
@@ -19,7 +19,7 @@ draw_capacity = rank > alpha_c
 
 r_values = np.linspace(1, 0, num = 50, endpoint = False)[::-1]
 m_values = np.linspace(1, 50, num = 50, dtype = int)
-t_values = [0, 1, 10, 1000]
+t_values = [0]
 
 m_arc_list = []
 m_ex_list = []
@@ -44,7 +44,7 @@ ms_red, seps_red = zip(*[(x, y) for x, y in zip(ms[1:], seps) if y is not None])
 
 
 for t in t_values:
-    experiment = lab.Experiment(directory = 'Data_remote', func = exp.gen_mr, m_values = m_values, r_values = r_values,
+    experiment = lab.Experiment(directory = 'Data', func = exp.gen_mr, m_values = m_values, r_values = r_values,
                                 neurons = neurons, rank = rank, t = t, p = p, reduced = reduced, diagonal = diagonal,
                                 initial = initial, max_it = max_it)
     m_arc, m_ex, its, errors = experiment.read()
@@ -57,6 +57,14 @@ for t in t_values:
 
 def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 1, draw_cap = draw_capacity):
     if len(t_values) == 1:
+        plt.rcParams.update({
+            'axes.labelsize': 16,
+            'axes.titlesize': 18,
+            'axes.titlesize': 18,
+            'figure.titlesize': 18,
+            'xtick.labelsize': 14,
+            'ytick.labelsize': 14,
+        })
         idx_t = 0
         fig, ax = plt.subplots(1)
 
@@ -76,7 +84,6 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
         ax.set_xlabel(r'$M$')
         ax.set_ylabel(r'$r$')
         ax.label_outer()
-        ax.set_title(rf'$t = {t_values[idx_t]}$')
 
         # fig.supxlabel(r'$M$')
         # fig.supylabel(r'$r$')
