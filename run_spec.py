@@ -6,17 +6,23 @@ from tqdm import tqdm
 import sys
 import experiments as exp
 
+uni_size = 25
+
 plt.rcParams.update({
-    'axes.labelsize': 16,
-    'axes.titlesize': 18,
-    'xtick.labelsize': 14,
-    'ytick.labelsize': 14,
+    'axes.labelsize': uni_size,
+    'axes.titlesize': uni_size,
+    'xtick.labelsize': uni_size,
+    'ytick.labelsize': uni_size,
 })
 
 t = 1
 alpha = 0.1
 m = 50
-r=0.3
+r=0.5
+neurons = 1000
+samples = 50
+
+#alpha = theory.sep_alpha(r, m)
 
 
 #print(theory.dist_roots(alpha = alpha, r = r, m = m, t = t, tol = 1e-2))
@@ -26,9 +32,6 @@ r=0.3
 #print(theory.t_max_dist(alpha = alpha, r = r, m = m))
 #theory.peak_left_tendency(alpha, r, m, t = 87)
 #[print(theory.peak_left_tendency(alpha, r, m, tt)) for tt in range(100)]
-
-neurons = 1000
-samples = 50
 
 spec = exp.spec_nosave(neurons = neurons, samples = samples, diagonal = False, alpha = alpha, r = r, m = m, t = t)
 plt.hist(np.ravel(spec), bins='fd', density=True)
@@ -52,7 +55,15 @@ plt.xlabel(r'$\lambda$')
 plt.ylabel(r'$\tilde{\rho}(\lambda)$')
 #plt.plot(xs, ys_d)
 #plt.ylim(-1, 100)
+
+plt.tight_layout()
+#plt.subplots_adjust(left=0.18)
+#plt.subplots_adjust(right=0.2)
 plt.show()
+
+
+
+
 
 
 sys.exit()

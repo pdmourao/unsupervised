@@ -2,6 +2,7 @@ import numpy as np
 import laboratory as lab
 import experiments as exp
 from matplotlib import pyplot as plt
+from matplotlib.colors import PowerNorm
 import sys
 import theory
 import scipy
@@ -22,7 +23,9 @@ if rank == 5:
     num_fine = 1000
     M_min = 11
     lvl = 0.13
+    gam = 0.6
 elif rank == 2:
+    gam = 0.4
     num_points = 100
     num_fine = 1000
     M_min = 5
@@ -33,12 +36,12 @@ else:
     M_min = 5
     lvl = 0.15
 
-
+uni_size = 22
 plt.rcParams.update({
-    'axes.labelsize': 16,
-    'axes.titlesize': 16,
-    'xtick.labelsize': 14,
-    'ytick.labelsize': 14,
+    'axes.labelsize': uni_size,
+    'axes.titlesize': uni_size,
+    'xtick.labelsize': uni_size,
+    'ytick.labelsize': uni_size,
 })
 
 
@@ -125,12 +128,12 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
     ax.set_ylim(y_min, y_max)
 
     if draw_capacity:
-        ax.vlines(x=rank / alpha_c, ymin=y_min, ymax=y_max, colors='red')
+        ax.vlines(x=rank / alpha_c, ymin=y_min, ymax=y_max, colors='red', linewidth = 3)
 
     ax.set_xlabel(r'$t$')
     ax.set_ylabel(r'$M$')
-    ax.set_title(rf'Archetype recall for $\alpha M = {rank}$')
-
+    ax.set_title(rf'$\alpha M = {rank}$' + '\nArchetype recall')
+    plt.subplots_adjust(left=0.15,bottom=0.15, top = 0.85)
     fig.colorbar(c, ax=ax)
 
 #pred_diff_right = np.where(t_grid > 10, pred_right_cm - pred_left_cm, np.nan)
@@ -138,16 +141,18 @@ draw_plot(m_arc, header = 'Archetype recall', color_scheme = 'Blues')
 
 Z = (pred_left_max-pred_left_cm)*(pred_right_max - pred_left_max)
 
+lw = 3
 x_argmax = t_fine[np.argmax(Z, axis=0)]  # for each row (fixed y), find x of max
-plt.plot(x_argmax, m_fine, color='red')
+plt.plot(x_argmax, m_fine, color='red', lw = lw)
 
 #plt.contour(t_grid, m_grid, pred_left_max, levels = [0], colors ='green', linestyles ='dashed')
-plt.contour(t_grid, m_grid, (pred_right_max - pred_left_max), levels = [lvl], colors ='black', linestyles ='dashed')
+plt.contour(t_grid, m_grid, (pred_right_max - pred_left_max), levels = [lvl], colors ='black', linestyles ='dashed', linewidths = lw)
 #plt.contour(t_grid, m_grid, pred_right_cm, levels = [0.05], colors ='orange', linestyles ='dashed')
 #plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [lvl], colors ='black', linestyles ='dashed')
 #plt.contour(t_grid, m_grid, pred_right_max - pred_left_max, levels = [0.4], colors ='grey', linestyles ='dashed')
 #plt.contour(t_grid, m_grid, pred_right_cm-pred_left_cm, levels = [0.2], colors ='black', linestyles ='dashed')
 #plt.contour(t_grid, m_grid, pred_right_cm - pred_left_cm, levels = [0.2], colors ='black', linestyles ='dashed')
+#plt.tight_layout()
 plt.show()
 
 #plt.contourf(t_grid, m_grid, pred_left_max-pred_left_cm)
@@ -157,11 +162,12 @@ plt.show()
 #plt.colorbar()
 #plt.show()
 
-plt.contourf(t_grid, m_grid, pred_right_max - pred_left_max, levels = 20)
+plt.contourf(t_grid, m_grid, pred_right_max - pred_left_max, levels = 20, norm=PowerNorm(gamma=gam))
 plt.xlabel(r'$t$')
 plt.ylabel(r'$M$')
-plt.title(rf"Distance between the maxima for $\alpha M = {rank}$", fontsize = 14)
+plt.title(rf"Distance between the maxima", fontsize = uni_size, pad=15)
 plt.colorbar()
+plt.subplots_adjust(bottom=0.15, left = 0.15)
 plt.show()
 
 #plt.contourf(t_grid, m_grid, Z)

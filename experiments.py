@@ -393,3 +393,44 @@ def gen_optimal(entropy, neurons, rank, m_values, r_values, p, initial, max_it, 
                 pbar.update(1)
 
     return mags_arc, mags_ex, its, errors
+
+
+def diag_std(entropy, n_values, alpha, m, r, t):
+
+    rng_list = np.random.SeedSequence(entropy).spawn(len(n_values))
+    diag_means = np.empty(len(n_values), dtype = float)
+    diag_stds = np.empty(len(n_values), dtype = float)
+
+    with tqdm(total = len(n_values)) as pbar:
+        for idx_n, n in enumerate(n_values):
+            # we take the rng for this iteration and provide it to the system with the rest of the inputs
+            this_ss = rng_list[idx_n]
+            system = dream(neurons=n, k=int(alpha * n), r=r, m=m, t=t,
+                           rng_ss=this_ss, diagonal=True)
+            # generate the iteraction matrix
+            system.set_interaction()
+            diag_means[idx_n] = np.mean(np.diag(system.J))
+            diag_stds[idx_n] = np.std(np.diag(system.J))
+            pbar.update(1)
+
+    return diag_means, diag_stds
+
+def diag_std_t(entropy, t_values, n, alpha, m, r):
+
+    rng_list = np.random.SeedSequence(entropy).spawn(len(t_values))
+    diag_means = np.empty(len(t_values), dtype = float)
+    diag_stds = np.empty(len(t_values), dtype = float)
+
+    with tqdm(total = len(t_values)) as pbar:
+        for idx_t, t in enumerate(t_values):
+            # we take the rng for this iteration and provide it to the system with the rest of the inputs
+            this_ss = rng_list[idx_t]
+            system = dream(neurons=n, k=int(alpha * n), r=r, m=m, t=t,
+                           rng_ss=this_ss, diagonal=True)
+            # generate the iteraction matrix
+            system.set_interaction()
+            diag_means[idx_t] = np.mean(np.diag(system.J))
+            diag_stds[idx_t] = np.std(np.diag(system.J))
+            pbar.update(1)
+
+    return diag_means, diag_stds

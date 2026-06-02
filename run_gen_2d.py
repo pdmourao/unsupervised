@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import laboratory as lab
 import experiments as exp
@@ -6,7 +8,7 @@ from tqdm import tqdm
 import theory
 
 neurons = 1000
-rank = 0.1
+rank = 2
 p = 0.9
 # samples = 10
 max_it = 200
@@ -19,7 +21,9 @@ draw_capacity = rank > alpha_c
 
 r_values = np.linspace(1, 0, num = 50, endpoint = False)[::-1]
 m_values = np.linspace(1, 50, num = 50, dtype = int)
-t_values = [0]
+t_values = [0, 1, 5, 10, 50, 100]
+t_values = [0, 1, 10, 1000]
+n_lines = int(len(t_values) / 2)
 
 m_arc_list = []
 m_ex_list = []
@@ -54,17 +58,17 @@ for t in t_values:
     errors_list.append(errors)
 
 # print(f'Maximum recorded iterations and errors were {np.max(its)} and {np.max(errors)}, respectively')
-
-def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 1, draw_cap = draw_capacity):
-    if len(t_values) == 1:
-        plt.rcParams.update({
-            'axes.labelsize': 16,
-            'axes.titlesize': 18,
-            'axes.titlesize': 18,
-            'figure.titlesize': 18,
-            'xtick.labelsize': 14,
-            'ytick.labelsize': 14,
+uni_size = 11
+def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 1, draw_cap = draw_capacity, save = False):
+    plt.rcParams.update({
+            'axes.labelsize': uni_size,
+            'axes.titlesize': uni_size,
+            'axes.titlesize': uni_size,
+            'figure.titlesize': uni_size,
+            'xtick.labelsize': uni_size,
+            'ytick.labelsize': uni_size,
         })
+    if len(t_values) == 1:
         idx_t = 0
         fig, ax = plt.subplots(1)
 
@@ -84,6 +88,7 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
         ax.set_xlabel(r'$M$')
         ax.set_ylabel(r'$r$')
         ax.label_outer()
+        ax.set_box_aspect(1)
 
         # fig.supxlabel(r'$M$')
         # fig.supylabel(r'$r$')
@@ -91,7 +96,7 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
         fig.suptitle(rf'{header} for $\alpha M = {rank}$')
         plt.show()
     else:
-        fig, axs = plt.subplots(2, 2, sharex = True, sharey = True)
+        fig, axs = plt.subplots(1, 4, sharex = True, sharey = True)
 
         for idx_t, ax in enumerate(axs.flat):
             c = ax.imshow(np.transpose(np.flip(apply_over_samples(np.abs(array[idx_t]), axis = 0), axis=-1)), cmap=color_scheme, vmin=0, vmax=vmax, aspect='auto',
@@ -111,22 +116,34 @@ def draw_plot(array, header, color_scheme, apply_over_samples = np.mean, vmax = 
             ax.set_ylabel(r'$r$')
             ax.label_outer()
             ax.set_title(rf'$t = {t_values[idx_t]}$')
+            ax.set_box_aspect(1)
+        pos = axs[-1].get_position()
+        # fig.tight_layout() 
+        cbar_ax = fig.add_axes([
+                    pos.x1 + 0.01,  # just to the right of the last plot
+                    pos.y0,         # same bottom
+                    0.015,          # width of the colorbar
+                    pos.height      # same height
+                ])
 
+        fig.colorbar(c, cax=cbar_ax)
         #fig.supxlabel(r'$M$')
         #fig.supylabel(r'$r$')
-        fig.colorbar(c, ax=axs.ravel().tolist())
-        fig.suptitle(rf'{header} for $\alpha M = {rank}$')
+        #fig.colorbar(c, ax=axs.ravel().tolist())
+        fig.suptitle(rf'{header} for $\alpha M = {rank}$', y=0.73)
+        if save:
+            plt.savefig(f"flatgenrm_rank{int(rank)}_p09_ts-0-1-10-1000_arc.png", bbox_inches='tight')
         plt.show()
 
-draw_plot(m_arc_list, header = 'Archetype recall', color_scheme = 'Blues')
-draw_plot(m_arc_list, header = 'Maximum archetype recall', color_scheme = 'Blues', apply_over_samples = np.max)
-draw_plot(m_ex_list, header = 'Example recall', color_scheme = 'YlOrBr')
-draw_plot(m_ex_list, header = 'Maximum example recall', color_scheme = 'YlOrBr', apply_over_samples = np.max)
-draw_plot(its_list, header = 'Maximum iterations', color_scheme = 'Reds', vmax = max_it, apply_over_samples=np.max)
-draw_plot(errors_list, header = 'Maximum final errors', color_scheme = 'Greys', apply_over_samples=np.max)
-draw_plot(errors_list, header = 'Mean final errors', color_scheme = 'Greys')
-
-fig, axs = plt.subplots(2, 2, sharex = True, sharey = True)
+draw_plot(m_arc_list, header = 'Archetype recall', color_scheme = 'Blues', save = True)
+#draw_plot(m_arc_list, header = 'Maximum archetype recall', color_scheme = 'Blues', apply_over_samples = np.max)
+#draw_plot(m_ex_list, header = 'Example recall', color_scheme = 'YlOrBr')
+#draw_plot(m_ex_list, header = 'Maximum example recall', color_scheme = 'YlOrBr', apply_over_samples = np.max)
+#draw_plot(its_list, header = 'Maximum iterations', color_scheme = 'Reds', vmax = max_it, apply_over_samples=np.max)
+#draw_plot(errors_list, header = 'Maximum final errors', color_scheme = 'Greys', apply_over_samples=np.max)
+#draw_plot(errors_list, header = 'Mean final errors', color_scheme = 'Greys')
+sys.exit()
+fig, axs = plt.subplots(2, n_lines, sharex = True, sharey = True)
 
 for idx_t, ax in enumerate(axs.flat):
     m_a = np.mean(m_arc_list[idx_t], axis = 0)
